@@ -45,7 +45,7 @@ export class HueDtlsController extends EventEmitter {
             ciphers: [
                 'TLS_PSK_WITH_AES_128_GCM_SHA256',
             ],
-            timeout: 1000,
+            timeout: 3000,
         };
 
         const socket = await dtls.createSocket(dtlsConfig)
