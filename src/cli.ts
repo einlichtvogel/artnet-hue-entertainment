@@ -121,7 +121,7 @@ class ArtNetHueEntertainmentCliHandler {
             hueUsername: username,
             hueClientKey: clientKey,
             entertainmentRoomId: 200,
-            artNetBindIp: '172.24.184.16',
+            artNetBindIp: this.config.get("artnet:host"),
             lights: [
                 {
                     dmxStart: 1,
@@ -174,7 +174,7 @@ class ArtNetHueEntertainmentCliHandler {
 
         if (!exists) {
             const fd = await open(CONFIG_FILE_PATH, 'w');
-            await fd.write('{}');
+            await fd.write('{"artnet": {"host": "127.0.0.1"}}');
             await fd.close();
         }
     }
