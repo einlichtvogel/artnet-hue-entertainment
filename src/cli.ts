@@ -125,29 +125,14 @@ class ArtNetHueEntertainmentCliHandler {
             lights: [
                 {
                     dmxStart: 1,
-                    lightId: '31',
+                    lightId: '1',
                     channelMode: '8bit-dimmable',
                 },
                 {
                     dmxStart: 5,
-                    lightId: '32',
+                    lightId: '2',
                     channelMode: '8bit-dimmable',
-                },
-                {
-                    dmxStart: 9,
-                    lightId: '33',
-                    channelMode: '8bit-dimmable',
-                },
-                {
-                    dmxStart: 13,
-                    lightId: '34',
-                    channelMode: '8bit-dimmable',
-                },
-                // {
-                //     dmxStart: 5,
-                //     lightId: '11',
-                //     channelMode: '8bit-dimmable',
-                // },
+                }
             ]
         });
         await bridge.start();
