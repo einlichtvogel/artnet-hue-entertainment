@@ -1,7 +1,7 @@
-import { dtls } from 'node-dtls-client';
-import { EventEmitter } from 'events';
+import {dtls} from 'node-dtls-client';
+import {EventEmitter} from 'events';
 import Timeout = NodeJS.Timeout;
-import { parse } from 'ip6addr';
+import {parse} from 'ip6addr';
 
 const PACKET_HEADER = Buffer.from([0x48, 0x75, 0x65, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d]);
 
@@ -41,7 +41,7 @@ export class HueDtlsController extends EventEmitter {
             type: addrInfo.kind() === 'ipv4' ? 'udp4' : 'udp6',
             port: this.port,
             address: this.host,
-            psk: { [this.username]: Buffer.from(this.clientKey, 'hex') },
+            psk: {[this.username]: Buffer.from(this.clientKey, 'hex')},
             ciphers: [
                 'TLS_PSK_WITH_AES_128_GCM_SHA256',
             ],

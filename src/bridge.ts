@@ -1,9 +1,9 @@
-import { v3 } from 'node-hue-api';
-import { Api } from 'node-hue-api/dist/esm/api/Api';
-import { ChannelModeType, LIGHT_MODE_16BIT, LIGHT_MODE_8BIT, LIGHT_MODE_8BIT_DIMMABLE } from './const';
-import { ColorUpdate, HueDtlsController } from './hue-dtls';
-import { ArtNetController } from 'artnet-protocol/dist';
-import { ArtDmx } from 'artnet-protocol/dist/protocol';
+import {v3} from 'node-hue-api';
+import {Api} from 'node-hue-api/dist/esm/api/Api';
+import {ChannelModeType, LIGHT_MODE_16BIT, LIGHT_MODE_8BIT, LIGHT_MODE_8BIT_DIMMABLE} from './const';
+import {ColorUpdate, HueDtlsController} from './hue-dtls';
+import {ArtNetController} from 'artnet-protocol/dist';
+import {ArtDmx} from 'artnet-protocol/dist/protocol';
 
 export interface LightConfiguration {
     dmxStart: number;
@@ -117,7 +117,7 @@ export class ArtNetHueBridge {
 
         const room = rooms[0];
         let roomLightIds = room.lights;
-        const lightConfigById: {[lightId: string]: LightConfiguration} = {};
+        const lightConfigById: { [lightId: string]: LightConfiguration } = {};
         const lights: DmxLight[] = [];
         this.configuration.lights.forEach(light => {
             const idx = roomLightIds.indexOf(light.lightId);
@@ -140,7 +140,8 @@ export class ArtNetHueBridge {
             this.configuration.hueUsername,
             this.configuration.hueClientKey,
         );
-        this.dtlsController.on('close', () => {});
+        this.dtlsController.on('close', () => {
+        });
         this.dtlsController.on('connected', this.onDtlsConnected.bind(this));
 
         this.artNetController = new ArtNetController();

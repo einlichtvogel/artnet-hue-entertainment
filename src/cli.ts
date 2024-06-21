@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import * as minimist from 'minimist';
-import { v3, discovery } from 'node-hue-api';
-import { ArtNetHueBridge } from './bridge';
+import {v3, discovery} from 'node-hue-api';
+import {ArtNetHueBridge} from './bridge';
 import * as nconf from 'nconf';
-import { stat, open } from 'fs/promises';
+import {stat, open} from 'fs/promises';
 
 const CONFIG_FILE_PATH = 'config.json';
 
