@@ -34,7 +34,7 @@
     "artnet-protocol": "^0.2.1",
     "conf": "^10.0.1",
     "ip6addr": "^0.2.3",
-    "minimist": "^1.2.5",
+    "minimist": "^1.2.8",
     "nconf": "^0.12.0",
     "node-dtls-client": "^1.0.1",
     "node-hue-api": "^5.0.0-beta.14"
@@ -46,6 +46,6 @@
     "@types/nconf": "^0.10.3",
     "@types/node": "^15.6.1",
     "@types/node-hue-api": "^2.3.2",
-    "typescript": "^4.3.2"
+    "typescript": "^4.9.5"
   }
 }
