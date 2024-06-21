@@ -34,6 +34,20 @@ If you need to support non-color or non-Hue bulbs as well, you should check out
 another project which talks to the normal Hue API, such as [Dmx-Hue](https://github.com/sinedied/dmx-hue).
 
 ## Setting up
+
+## Building typescript
+
+Install typescript, build and install the project with:
+
+```bash
+npm i typescript --save-dev
+npx tsc
+npm install .
+```
+
+
+## Configuration
+
 To start using ArtNet-Hue-Entertainment, take the following steps:
 1. First, open the Philips Hue app on your phone
    and setup a new Entertainment group.
