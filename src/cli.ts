@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as minimist from 'minimist';
-import {v3, discovery} from 'node-hue-api';
+import {v3, discovery, ApiError} from 'node-hue-api';
 import {ArtNetHueBridge} from './bridge';
 import * as nconf from 'nconf';
 import {stat, open} from 'fs/promises';
@@ -79,8 +79,10 @@ class ArtNetHueEntertainmentCliHandler {
             console.log('Hue setup was successful! Credentials are saved. You can run the server now.')
 
         } catch (e) {
-            if (e._hueError) {
-                console.error('Error while pairing:', e._hueError.payload.message);
+            const error = e as ApiError;
+            let hue_error = error.getHueError();
+            if (hue_error !== undefined) {
+                console.error('Error while pairing:', hue_error.message);
                 process.exit(1);
             }
             throw e;
