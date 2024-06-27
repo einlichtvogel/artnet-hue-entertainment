@@ -60,7 +60,10 @@ To start using ArtNet-Hue-Entertainment, take the following steps:
    This will print a list of all Hue bridges and their IP address.
 4. Pair with a Hue bridge. To do so, first press the link button on the bridge.
    Then run: `artnet-hue-entertainment pair --ip <ip address of bridge>`.
-5. This project really is still work in progress. More to come!
+5. Use `artnet-hue-entertertainment list-rooms` to find information of the Hue bulbs +
+   entertainment group. Configure them in TODO.
+6. Run using `artnet-hue-entertertainment run`
+7. This project really is still work in progress. More to come!
 
 ## Channel modes
 DMX channel mode can be configured for every Hue light that is controlled.
