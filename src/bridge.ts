@@ -142,7 +142,7 @@ export class ArtNetHueBridge {
         );
         this.dtlsController.on('close', () => {
         });
-        this.dtlsController.on('connected', this.onDtlsConnected.bind(this));
+        this.dtlsController.on('connect', this.onDtlsConnected.bind(this));
 
         this.artNetController = new ArtNetController();
         this.artNetController.nameLong = 'ArtNet Hue';
@@ -154,11 +154,11 @@ export class ArtNetHueBridge {
         const streamingResponse = await this.hueApi.groups.enableStreaming(this.configuration.entertainmentRoomId);
         console.log('Streaming enabled:', streamingResponse);
 
-        console.log('Sleeping for 3s to give the Hue bridge time to enable streaming mode');
+        console.log('Sleeping for 1s to give the Hue bridge time to enable streaming mode');
 
         // Short delay because it can take some time for the Hue bridge to start
         // listening on the DTLS port.
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
         console.log('Performing streaming mode handshake...');
         await this.dtlsController.connect();
@@ -184,6 +184,7 @@ export class ArtNetHueBridge {
         this.lights!.forEach(light => {
             const dmxData = dmx.data.slice(light.dmxStart - 1, (light.dmxStart - 1) + light.channelWidth);
             const colors = light.getColorValue(dmxData);
+            // console.log(`Light ${light.lightId} set to ${colors}`);
             colorUpdates.push({lightId: light.lightId, color: colors});
         });
 
@@ -191,6 +192,7 @@ export class ArtNetHueBridge {
     }
 
     private onDtlsConnected() {
+        console.log("DTLS connected")
         const colorUpdates: ColorUpdate[] = [];
         this.lights!.forEach(light => {
             colorUpdates.push({lightId: light.lightId, color: [0, 0, 0]});
