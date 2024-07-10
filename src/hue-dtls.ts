@@ -1,7 +1,6 @@
 import { connect } from '@nodertc/dtls';
 import {EventEmitter} from 'events';
 import Timeout = NodeJS.Timeout;
-import {parse} from 'ip6addr';
 import { Socket } from 'net';
 
 const PACKET_HEADER = Buffer.from([0x48, 0x75, 0x65, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d]);
@@ -37,7 +36,6 @@ export class HueDtlsController extends EventEmitter {
     }
 
     async connect() {
-        const addrInfo = parse(this.host);
         const dtlsConfig: any = {
             type: 'udp4',
             remotePort: this.port,

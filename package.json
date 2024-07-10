@@ -34,10 +34,8 @@
     "@peter-murray/hue-bridge-model": "^2.0.4",
     "artnet-protocol": "^0.2.1",
     "conf": "^10.0.1",
-    "ip6addr": "^0.2.3",
     "minimist": "^1.2.8",
     "nconf": "^0.12.0",
-    "node-dtls-client": "^1.0.1",
     "node-hue-api": "^5.0.0-beta.14"
   },
   "devDependencies": {
