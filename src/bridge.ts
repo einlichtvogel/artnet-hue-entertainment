@@ -17,6 +17,7 @@ export interface Configuration {
     hueClientKey: string;
     entertainmentRoomId: number;
     artNetBindIp: string;
+    artNetUniverse: number;
     lights: LightConfiguration[];
 }
 
@@ -179,7 +180,7 @@ export class ArtNetHueBridge {
         }
     }
 
-    private onDmxData(dmx: ArtDmx) {
+    private executeColorUpdate(dmx: ArtDmx) {
         const colorUpdates: ColorUpdate[] = [];
         this.lights!.forEach(light => {
             const dmxData = dmx.data.slice(light.dmxStart - 1, (light.dmxStart - 1) + light.channelWidth);
@@ -189,6 +190,12 @@ export class ArtNetHueBridge {
         });
 
         this.dtlsController?.sendUpdate(colorUpdates);
+    }
+
+    private onDmxData(dmx: ArtDmx) {
+        if (dmx.universe == this.configuration.artNetUniverse) {
+            this.executeColorUpdate(dmx);
+        }
     }
 
     private onDtlsConnected() {
