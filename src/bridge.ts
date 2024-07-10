@@ -154,11 +154,11 @@ export class ArtNetHueBridge {
         const streamingResponse = await this.hueApi.groups.enableStreaming(this.configuration.entertainmentRoomId);
         console.log('Streaming enabled:', streamingResponse);
 
-        console.log('Sleeping for 3s to give the Hue bridge time to enable streaming mode');
+        console.log('Sleeping for 1s to give the Hue bridge time to enable streaming mode');
 
         // Short delay because it can take some time for the Hue bridge to start
         // listening on the DTLS port.
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
         console.log('Performing streaming mode handshake...');
         await this.dtlsController.connect();
