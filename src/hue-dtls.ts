@@ -57,6 +57,12 @@ export class HueDtlsController extends EventEmitter {
             this.close();
         });
 
+        socket.on('error', (err: any) => {
+            console.log("UDP Stream interrupted, closing connection.");
+            // console.log("UDP Stream interrupted, closing connection.\n", err);
+            this.close();
+        });
+
         this.updateKeepaliveTimeout = setInterval(this.updateKeepalive.bind(this), 1000);
 
         this.socket = socket;
@@ -67,7 +73,7 @@ export class HueDtlsController extends EventEmitter {
             return;
         }
         this.opened = false;
-        // await new Promise(resolve => this.socket?.close(() => resolve(undefined)));
+        await new Promise(resolve => this.socket?.end(() => resolve(undefined)));
         this.emit('close');
     }
 
