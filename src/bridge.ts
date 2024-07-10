@@ -142,7 +142,7 @@ export class ArtNetHueBridge {
         );
         this.dtlsController.on('close', () => {
         });
-        this.dtlsController.on('connected', this.onDtlsConnected.bind(this));
+        this.dtlsController.on('connect', this.onDtlsConnected.bind(this));
 
         this.artNetController = new ArtNetController();
         this.artNetController.nameLong = 'ArtNet Hue';
@@ -184,6 +184,7 @@ export class ArtNetHueBridge {
         this.lights!.forEach(light => {
             const dmxData = dmx.data.slice(light.dmxStart - 1, (light.dmxStart - 1) + light.channelWidth);
             const colors = light.getColorValue(dmxData);
+            console.log(`Light ${light.lightId} set to ${colors}`);
             colorUpdates.push({lightId: light.lightId, color: colors});
         });
 
@@ -191,6 +192,7 @@ export class ArtNetHueBridge {
     }
 
     private onDtlsConnected() {
+        console.log("DTLS connected")
         const colorUpdates: ColorUpdate[] = [];
         this.lights!.forEach(light => {
             colorUpdates.push({lightId: light.lightId, color: [0, 0, 0]});

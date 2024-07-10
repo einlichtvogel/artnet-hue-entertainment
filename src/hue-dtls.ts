@@ -1,7 +1,8 @@
-import {dtls} from 'node-dtls-client';
+const dtls = require('@nodertc/dtls');
 import {EventEmitter} from 'events';
 import Timeout = NodeJS.Timeout;
 import {parse} from 'ip6addr';
+import { Socket } from 'net';
 
 const PACKET_HEADER = Buffer.from([0x48, 0x75, 0x65, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d]);
 
@@ -19,7 +20,7 @@ export class HueDtlsController extends EventEmitter {
     private readonly clientKey: string;
     private readonly port = 2100;
 
-    private socket: dtls.Socket | null = null;
+    private socket: Socket | null = null;
 
     private opened = false;
     private skip = false;
@@ -38,18 +39,17 @@ export class HueDtlsController extends EventEmitter {
     async connect() {
         const addrInfo = parse(this.host);
         const dtlsConfig: any = {
-            type: addrInfo.kind() === 'ipv4' ? 'udp4' : 'udp6',
-            port: this.port,
-            address: this.host,
-            psk: {[this.username]: Buffer.from(this.clientKey, 'hex')},
-            ciphers: [
-                'TLS_PSK_WITH_AES_128_GCM_SHA256',
-            ],
-            timeout: 3000,
+            type: 'udp4',
+            remotePort: this.port,
+            remoteAddress: this.host,
+            maxHandshakeRetransmissions: 4,
+            pskIdentity: this.username,
+            pskSecret: Buffer.from(this.clientKey, 'hex'),
+            cipherSuites: ['TLS_PSK_WITH_AES_128_GCM_SHA256'],
         };
 
-        const socket = await dtls.createSocket(dtlsConfig)
-        socket.on('connected', () => {
+        const socket = await dtls.connect(dtlsConfig);
+        socket.once('connect', () => {
             this.opened = true;
             this.emit('connected');
         });
@@ -67,7 +67,7 @@ export class HueDtlsController extends EventEmitter {
             return;
         }
         this.opened = false;
-        await new Promise(resolve => this.socket?.close(() => resolve(undefined)));
+        // await new Promise(resolve => this.socket?.close(() => resolve(undefined)));
         this.emit('close');
     }
 
@@ -119,10 +119,10 @@ export class HueDtlsController extends EventEmitter {
             offset += 9;
         });
 
-        // console.log(message.toString('hex').match(/../g)!.join(' '));
+        console.log(message.toString('hex').match(/../g)!.join(' '));
 
         if (this.opened) {
-            this.socket?.send(message);
+            this.socket?.write(message);
         }
     }
 }
