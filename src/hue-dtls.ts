@@ -1,4 +1,4 @@
-const dtls = require('@nodertc/dtls');
+import { connect } from '@nodertc/dtls';
 import {EventEmitter} from 'events';
 import Timeout = NodeJS.Timeout;
 import {parse} from 'ip6addr';
@@ -48,7 +48,7 @@ export class HueDtlsController extends EventEmitter {
             cipherSuites: ['TLS_PSK_WITH_AES_128_GCM_SHA256'],
         };
 
-        const socket = await dtls.connect(dtlsConfig);
+        const socket = await connect(dtlsConfig);
         socket.once('connect', () => {
             this.opened = true;
             this.emit('connected');
