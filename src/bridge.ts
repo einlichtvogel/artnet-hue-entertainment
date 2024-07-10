@@ -184,7 +184,7 @@ export class ArtNetHueBridge {
         this.lights!.forEach(light => {
             const dmxData = dmx.data.slice(light.dmxStart - 1, (light.dmxStart - 1) + light.channelWidth);
             const colors = light.getColorValue(dmxData);
-            console.log(`Light ${light.lightId} set to ${colors}`);
+            // console.log(`Light ${light.lightId} set to ${colors}`);
             colorUpdates.push({lightId: light.lightId, color: colors});
         });
 

@@ -58,7 +58,6 @@ export class HueDtlsController extends EventEmitter {
         });
 
         socket.on('error', (err: any) => {
-            console.log("UDP Stream interrupted, closing connection.");
             // console.log("UDP Stream interrupted, closing connection.\n", err);
             this.close();
         });
@@ -125,7 +124,7 @@ export class HueDtlsController extends EventEmitter {
             offset += 9;
         });
 
-        console.log(message.toString('hex').match(/../g)!.join(' '));
+        // console.log(message.toString('hex').match(/../g)!.join(' '));
 
         if (this.opened) {
             this.socket?.write(message);
