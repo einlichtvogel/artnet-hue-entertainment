@@ -129,6 +129,12 @@ class ArtNetHueEntertainmentCliHandler {
             return;
         }
 
+        if(lights.some(light => light.channelMode === undefined || (light.channelMode !== "8bit" && light.channelMode !== "8bit-dimmable" && light.channelMode !== "16bit"))) {
+            const light = lights.find(light => light.channelMode === undefined || (light.channelMode !== "8bit" && light.channelMode !== "8bit-dimmable" && light.channelMode !== "16bit"));
+            console.error('Invalid channel mode in light configuration (lightId ' + light!.lightId + '). Valid values are: 8bit, 8bit-dimmable, 16bit');
+            process.exit(1);
+        }
+
         const bridge = new ArtNetHueBridge({
             hueHost: host,
             hueUsername: username,
