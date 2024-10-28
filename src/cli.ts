@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import * as minimist from 'minimist';
 import {v3, discovery, ApiError} from 'node-hue-api';
-import {ArtNetHueBridge} from './bridge';
+import {ArtNetHueBridge, LightConfiguration} from './bridge';
 import * as nconf from 'nconf';
 import {stat, open} from 'fs/promises';
 
@@ -74,6 +74,18 @@ class ArtNetHueEntertainmentCliHandler {
             this.config.set('hue:host', host);
             this.config.set('hue:username', user.username);
             this.config.set('hue:clientKey', user.clientkey);
+            this.config.set('hue:lights', [
+                {
+                    lightId: '1',
+                    dmxStart: 1,
+                    channelMode: '8bit-dimmable',
+                },
+                {
+                    lightId: '2',
+                    dmxStart: 5,
+                    channelMode: '8bit-dimmable',
+                }
+            ]);
             this.config.save(null);
 
             console.log('Hue setup was successful! Credentials are saved. You can run the server now.')
@@ -111,6 +123,7 @@ class ArtNetHueEntertainmentCliHandler {
         const host = this.config.get('hue:host') as string;
         const username = this.config.get('hue:username') as string;
         const clientKey = this.config.get('hue:clientKey') as string;
+        const lights = this.config.get('hue:lights') as LightConfiguration[];
         if (host === undefined || username === undefined || clientKey === undefined) {
             console.log('No Hue bridge is paired yet. Please pair a bridge first');
             return;
@@ -123,18 +136,7 @@ class ArtNetHueEntertainmentCliHandler {
             entertainmentRoomId: 200,
             artNetBindIp: this.config.get("artnet:host"),
             artNetUniverse: this.config.get("artnet:universe"),
-            lights: [
-                {
-                    dmxStart: 1,
-                    lightId: '1',
-                    channelMode: '8bit-dimmable',
-                },
-                {
-                    dmxStart: 5,
-                    lightId: '2',
-                    channelMode: '8bit-dimmable',
-                }
-            ]
+            lights: lights,
         });
         await bridge.start();
     }
