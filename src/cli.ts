@@ -4,6 +4,7 @@ import {v3, discovery, ApiError} from 'node-hue-api';
 import {ArtNetHueBridge, LightConfiguration} from './bridge';
 import * as nconf from 'nconf';
 import {stat, open} from 'fs/promises';
+const LightState = v3.lightStates.LightState;
 
 const CONFIG_FILE_PATH = 'config.json';
 
@@ -35,6 +36,8 @@ class ArtNetHueEntertainmentCliHandler {
             await this.startProcess();
         } else if (this.args[0] === 'list-rooms') {
             await this.listEntertainmentRooms();
+        } else if (this.args[0] === 'ping-light') {
+            await this.pingLight(this.args.slice(1));
         } else {
             this.printHelp();
             return;
@@ -50,6 +53,8 @@ class ArtNetHueEntertainmentCliHandler {
         console.log('  discover             Discover all Hue bridges on your network. When you know the IP address of the bridge, run \'pair\' directly.');
         console.log('  pair                 Pair with a Hue bridge. Press the link button on the bridge before running');
         console.log('    --ip               The IP address of the Hue bridge. Both IPv4 and IPv6 are supported.');
+        console.log('  ping-light           Indicated a light.');
+        console.log('    --id               The id of the light to indicate.');
         console.log('  list-rooms           List all available entertainment rooms');
         console.log('  run                  Run the ArtNet to Hue bridge.');
         process.exit(1);
@@ -157,6 +162,36 @@ class ArtNetHueEntertainmentCliHandler {
         })
         console.log('Available entertainment rooms:');
         console.log(roomsCleaned.join(", "));
+    }
+
+    async pingLight(argv: string[]) {
+        const args = minimist(argv, {
+            string: ['id'],
+        });
+
+        if (!('id' in args) || args.id.length === 0) {
+            this.printHelp();
+            process.exit(1);
+            return;
+        }
+
+        const lightId: number = args.id;
+
+        const hueApi = await v3.api.createLocal(this.config.get("hue:host"))
+          .connect(this.config.get("hue:username"));
+
+        try {
+            await hueApi.lights.setLightState(lightId,
+              new LightState()
+                .alert()
+                .alertShort()
+            );
+        }catch (e: any){
+            console.error('Error while pinging light:', e.message);
+            process.exit(1);
+        }
+
+        console.log(`Light ${lightId} pinged.`);
     }
 
     private async checkOrCreateConfigFile() {
