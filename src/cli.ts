@@ -66,7 +66,7 @@ class ArtNetHueEntertainmentCliHandler {
         });
 
         if (!('ip' in args) || args.ip.length === 0) {
-            // TODO: Print help
+            this.printHelp();
             process.exit(1);
             return;
         }
