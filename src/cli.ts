@@ -152,9 +152,11 @@ class ArtNetHueEntertainmentCliHandler {
             .connect(this.config.get("hue:username"));
 
         const rooms = await hueApi.groups.getEntertainment();
-        rooms.forEach(room => {
-            console.log(room);
-        });
+        const roomsCleaned = rooms.map(r => {
+            return " - Room " + r.id + ": " + r.name + " (Lights: " + r.lights.join(", ") + ")";
+        })
+        console.log('Available entertainment rooms:');
+        console.log(roomsCleaned.join(", "));
     }
 
     private async checkOrCreateConfigFile() {
