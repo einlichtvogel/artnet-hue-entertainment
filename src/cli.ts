@@ -38,6 +38,10 @@ class ArtNetHueEntertainmentCliHandler {
             await this.listEntertainmentRooms();
         } else if (this.args[0] === 'ping-light') {
             await this.pingLight(this.args.slice(1));
+        } else if (this.args[0] === 'list-lights') {
+            await this.listAllLights();
+        } else if(this.args[0] === 'rename-lights-after-id' ){
+            await this.renameLightsAfterID();
         } else {
             this.printHelp();
             return;
@@ -50,13 +54,15 @@ class ArtNetHueEntertainmentCliHandler {
         console.log('Control Philips/Signify Hue lights using ArtNet.');
         console.log('');
         console.log('Subcommands:');
-        console.log('  discover             Discover all Hue bridges on your network. When you know the IP address of the bridge, run \'pair\' directly.');
-        console.log('  pair                 Pair with a Hue bridge. Press the link button on the bridge before running');
-        console.log('    --ip               The IP address of the Hue bridge. Both IPv4 and IPv6 are supported.');
-        console.log('  ping-light           Indicated a light.');
-        console.log('    --id               The id of the light to indicate. If the is "all" then all lights will be indicated.');
-        console.log('  list-rooms           List all available entertainment rooms');
-        console.log('  run                  Run the ArtNet to Hue bridge.');
+        console.log('  discover                Discover all Hue bridges on your network. When you know the IP address of the bridge, run \'pair\' directly.');
+        console.log('  pair                    Pair with a Hue bridge. Press the link button on the bridge before running');
+        console.log('    --ip                  The IP address of the Hue bridge. Both IPv4 and IPv6 are supported.');
+        console.log('  ping-light              Indicated a light.');
+        console.log('    --id                  The id of the light to indicate. If the is "all" then all lights will be indicated.');
+        console.log('  list-rooms              List all available entertainment rooms.');
+        console.log('  list-lights             List all available lights.');
+        console.log('  rename-lights-after-id  Renames every light after it`s id.');
+        console.log('  run                     Run the ArtNet to Hue bridge.');
         process.exit(1);
     }
 
@@ -154,7 +160,7 @@ class ArtNetHueEntertainmentCliHandler {
 
     async listEntertainmentRooms() {
         const hueApi = await v3.api.createLocal(this.config.get("hue:host"))
-            .connect(this.config.get("hue:username"));
+          .connect(this.config.get("hue:username"));
 
         const rooms = await hueApi.groups.getEntertainment();
         const roomsCleaned = rooms.map(r => {
@@ -162,6 +168,38 @@ class ArtNetHueEntertainmentCliHandler {
         })
         console.log('Available entertainment rooms:');
         console.log(roomsCleaned.join(", "));
+    }
+
+    async listAllLights() {
+        const hueApi = await v3.api.createLocal(this.config.get("hue:host"))
+          .connect(this.config.get("hue:username"));
+
+        const rooms = await hueApi.lights.getAll();
+        const lightsCleaned = rooms.map(r => {
+            return " - Light " + r.id + ": " + r.name
+        })
+        console.log('Available lights:');
+        lightsCleaned.forEach(light => {
+            console.log(light);
+        })
+    }
+
+    async renameLightsAfterID() {
+        const hueApi = await v3.api.createLocal(this.config.get("hue:host"))
+          .connect(this.config.get("hue:username"));
+
+        const allLights = await hueApi.lights.getAll();
+        for (const lightType of allLights) {
+            const newName = `Light ${lightType.id}`;
+
+            if(lightType.name == newName){
+                console.log(`Light ${lightType.id} already has the correct name.`);
+                continue;
+            }
+            console.log(`Renaming light ${lightType.name} to Light ${lightType.id}`);
+            lightType.name = "Light " + lightType.id;
+            await hueApi.lights.renameLight(lightType as unknown as any);
+        }
     }
 
     async pingLight(argv: string[]) {
