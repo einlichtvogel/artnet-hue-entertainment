@@ -83,7 +83,9 @@ export class HueDtlsController extends EventEmitter {
             this.skip = false;
             return;
         }
-        this.skip = true;
+
+        //Skip every other update to reduce the amount of data sent to the bridge, removed for now
+        //this.skip = true;
         this.lastUpdate = updates;
         this.lastUpdateTimestamp = new Date();
 
