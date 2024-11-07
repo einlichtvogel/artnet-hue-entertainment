@@ -196,7 +196,8 @@ export class ArtNetHueBridge {
     }
 
     private onDtlsConnected() {
-        console.log("DTLS connected")
+        console.log("Connected to Hue Entertainment API - Pinging all lights");
+
         const colorUpdates: ColorUpdate[] = [];
         this.lights!.forEach(light => {
             colorUpdates.push({lightId: light.lightId, color: [0, 0, 0]});
