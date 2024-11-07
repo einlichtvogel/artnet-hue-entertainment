@@ -141,10 +141,6 @@ export class ArtNetHueBridge {
             this.configuration.hueUsername,
             this.configuration.hueClientKey,
         );
-        this.dtlsController.on('close', () => {
-        });
-        this.dtlsController.on('connect', this.onDtlsConnected.bind(this));
-
         this.artNetController = new ArtNetController();
         this.artNetController.nameLong = 'ArtNet Hue';
         this.artNetController.nameShort = 'ArtNet Hue';
@@ -163,6 +159,7 @@ export class ArtNetHueBridge {
 
         console.log('Performing streaming mode handshake...');
         await this.dtlsController.connect();
+        this.dtlsController.on('connected', this.onDtlsConnected.bind(this));
         console.log('Connected and ready to go!');
 
         const shutdownHandler = () => {
