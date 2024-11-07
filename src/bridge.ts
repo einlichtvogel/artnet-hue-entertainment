@@ -160,7 +160,6 @@ export class ArtNetHueBridge {
         console.log('Performing streaming mode handshake...');
         await this.dtlsController.connect();
         this.dtlsController.on('connected', this.onDtlsConnected.bind(this));
-        console.log('Connected and ready to go!');
 
         const shutdownHandler = () => {
             process.off('SIGINT', shutdownHandler);
