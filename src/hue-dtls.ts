@@ -52,11 +52,12 @@ export class HueDtlsController extends EventEmitter {
             this.emit('connected');
         });
         socket.on('close', () => {
+            console.log("UDP Stream closed, closing connection.");
             this.close();
         });
 
         socket.on('error', (err: any) => {
-            // console.log("UDP Stream interrupted, closing connection.\n", err);
+            console.log("UDP Stream interrupted, closing connection.\n", err);
             this.close();
         });
 
