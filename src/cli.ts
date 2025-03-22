@@ -42,10 +42,34 @@ class ArtNetHueEntertainmentCliHandler {
             await this.listAllLights();
         } else if(this.args[0] === 'rename-lights-after-id' ){
             await this.renameLightsAfterID();
+        } else if(this.args[0] === 'auto-setup') {
+            await this.autoSetup();
         } else {
             this.printHelp();
             return;
         }
+    }
+
+    async autoSetup() {
+        const hueApi = await v3.api.createLocal(this.config.get("hue:host"))
+            .connect(this.config.get("hue:username"));
+
+        const rooms = await hueApi.groups.getEntertainment();
+
+
+        const sortedLights = rooms[0].lights.map((light, index) => {
+            return {
+                "lightId": Number(light),
+                "dmxStart": 3 * (index) + 1,
+                "channelMode": "8bit",
+            }
+        })
+
+        console.log('Setting up lights...');
+        console.log(sortedLights);
+
+        this.config.set('hue:lights', sortedLights);
+        this.config.save(null);
     }
 
     printHelp() {
