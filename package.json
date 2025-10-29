@@ -7,7 +7,7 @@
     "url": "https://github.com/jeffreykog/artnet-hue-entertainment.git"
   },
   "scripts": {
-    "build": "tsc"
+    "build": "./node_modules/typescript/bin/tsc"
   },
   "author": {
     "name": "Jeffrey Kog",
