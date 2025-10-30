@@ -38,6 +38,8 @@ class ArtNetHueEntertainmentCliHandler {
             await this.listEntertainmentRooms();
         } else if (this.args[0] === 'ping-light') {
             await this.pingLight(this.args.slice(1));
+        } else if (this.args[0] === 'ping-lights') {
+            await this.pingLight(["all"]);
         } else if (this.args[0] === 'list-lights') {
             await this.listAllLights();
         } else if(this.args[0] === 'rename-lights-after-id' ){
