@@ -2,7 +2,7 @@
 
 Each light mapping connects a range of Art-Net DMX channels to a Hue light. `dmxStart` is one-based: a mapping starting at `1` reads the first DMX channel.
 
-`channelMode` describes the DMX channel layout. It does not change the operating mode of the physical Hue lamp.
+`channelMode` describes the DMX channel layout. It does not change the operating mode of the physical Hue lamp. The short names in this document summarize the channel layout; configuration files continue to use the canonical mode names.
 
 ## Recommended lamp-ID mapping
 
@@ -47,12 +47,12 @@ See [config.channels.example.json](config.channels.example.json) for a complete 
 
 ## Supported DMX channel modes
 
-| Mode | Width | Channel order | Description |
-| --- | ---: | --- | --- |
-| `8bit` | 3 | Red, Green, Blue | Standard RGB with 256 values per color. |
-| `8bit-dimmable` | 4 | Dimmer, Red, Green, Blue | RGB multiplied by a master dimmer; recommended for lighting consoles. |
-| `16bit` | 6 | Red coarse, Red fine, Green coarse, Green fine, Blue coarse, Blue fine | High-resolution RGB with 65,536 values per color. |
-| `16bit-dimmable` | 8 | Dimmer coarse/fine, then RGB coarse/fine | High-resolution RGB multiplied by a high-resolution master dimmer. |
+| Mode | Short name | Width | Channel order | Description |
+| --- | --- | ---: | --- | --- |
+| `8bit` | `RGB` | 3 | Red, Green, Blue | Standard RGB with 256 values per color. |
+| `8bit-dimmable` | `DRGB` | 4 | Dimmer, Red, Green, Blue | RGB multiplied by a master dimmer; recommended for lighting consoles. |
+| `16bit` | `RGB16` | 6 | Red coarse, Red fine, Green coarse, Green fine, Blue coarse, Blue fine | High-resolution RGB with 65,536 values per color. |
+| `16bit-dimmable` | `DRGB16` | 8 | Dimmer coarse/fine, then RGB coarse/fine | High-resolution RGB multiplied by a high-resolution master dimmer. |
 
 ### `8bit`
 
