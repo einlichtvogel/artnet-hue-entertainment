@@ -4,6 +4,8 @@ The ready-to-use Compose files pull `ghcr.io/einlichtvogel/artnet-hue-entertainm
 
 For a shorter setup guide and ready-to-copy configurations, see [README.md](README.md).
 
+For a new installation, `./setup.sh` performs the pairing, area selection, lamp mapping, and service startup interactively. It refuses to replace an existing `data/default/config.json`.
+
 ## Single instance
 
 Run the commands in this document from the `docker/` directory. Create a host directory that the container user can write. The default UID/GID is 1000; override it when the host account uses different IDs.

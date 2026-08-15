@@ -4,29 +4,26 @@ This folder contains only the files needed to deploy the published image: Compos
 
 ## Start one instance
 
-Enter this directory and create the writable configuration directory:
+Run the interactive initial setup from the repository root:
+
+```bash
+./docker/setup.sh
+```
+
+You can optionally provide the Hue Bridge address directly:
+
+```bash
+./docker/setup.sh 192.168.1.10
+```
+
+The script checks Docker, creates `data/default/config.json`, pulls the current image, pairs with the bridge, shows the available Entertainment areas, sets the Art-Net universe, generates lamp-ID mappings, and starts the service. It never overwrites an existing configuration.
+
+For manual setup, enter this directory and copy the recommended example:
 
 ```bash
 cd docker
 mkdir -p data/default
 cp config.lights.example.json data/default/config.json
-export ARTNET_HUE_UID="$(id -u)"
-export ARTNET_HUE_GID="$(id -g)"
-```
-
-Edit `data/default/config.json`. Set the Hue Bridge address, credentials, Entertainment area UUID, Art-Net universe, and lamp IDs. Then start the service:
-
-```bash
-docker compose up -d
-docker compose logs -f bridge
-```
-
-To create credentials from the container, press the Hue Bridge link button and run:
-
-```bash
-docker compose run --rm bridge pair --ip 192.168.1.10 --config /data/config.json
-docker compose run --rm bridge list-areas --config /data/config.json
-docker compose run --rm bridge auto-setup --config /data/config.json
 ```
 
 `auto-setup` creates the recommended lamp-ID mappings. Use `config.channels.example.json` only when you need advanced segment-level control with Hue Entertainment channel IDs.
