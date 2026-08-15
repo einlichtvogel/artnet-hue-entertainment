@@ -28,11 +28,9 @@
   },
   "files": [
     "build/",
-    "config.example.json",
     "docs/",
     "README.md",
-    "LICENSE.txt",
-    "qlc+/"
+    "LICENSE.txt"
   ],
   "engines": {
     "node": ">=22"

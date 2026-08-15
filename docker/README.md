@@ -28,6 +28,8 @@ cp config.lights.example.json data/default/config.json
 
 `auto-setup` creates the recommended lamp-ID mappings. Use `config.channels.example.json` only when you need advanced segment-level control with Hue Entertainment channel IDs.
 
+See [LIGHT-MODES.md](LIGHT-MODES.md) for all supported DMX layouts, channel widths, addressing examples, and the difference between lamp and channel mappings.
+
 ## Multiple instances
 
 Give every instance its own directory and configuration:

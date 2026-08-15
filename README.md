@@ -90,7 +90,7 @@ Use `--config <path>` with any command to select a file other than `./config.jso
 
 ## Configuration
 
-`pair` and `auto-setup` create a configuration shaped like [config.example.json](config.example.json):
+`pair` and `auto-setup` create a configuration shaped like [docker/config.lights.example.json](docker/config.lights.example.json):
 
 ```json
 {
@@ -128,7 +128,7 @@ The file contains credentials and is written with owner-only permissions. Do not
 - `8bit-dimmable`: `Dimmer, R, G, B` (4 channels, recommended)
 - `16bit`: `R, R fine, G, G fine, B, B fine` (6 channels)
 
-The included [`qlc+/Artnet-Hue-RGB.qxf`](qlc+/Artnet-Hue-RGB.qxf) defines all three modes for QLC+.
+See [docker/LIGHT-MODES.md](docker/LIGHT-MODES.md) for detailed channel tables, addressing examples, lamp-ID mappings, and advanced Hue channel mappings.
 
 ### Entertainment channel mappings
 

@@ -22,9 +22,8 @@ RUN npm ci --omit=dev \
     && npm cache clean --force
 
 COPY --from=build --chown=node:node /app/build ./build
-COPY --chown=node:node README.md LICENSE.txt config.example.json ./
+COPY --chown=node:node README.md LICENSE.txt ./
 COPY --chown=node:node docs ./docs
-COPY --chown=node:node qlc+ ./qlc+
 
 RUN mkdir /data \
     && chown node:node /data
