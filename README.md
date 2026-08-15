@@ -33,6 +33,14 @@ npm run check
 
 The repository includes a ready-to-use Compose definition that pulls the latest multi-platform image from GitHub Container Registry. On Linux, host networking provides reliable Art-Net broadcast reception and direct Hue LAN access.
 
+For a new installation, run the interactive setup from the repository root. It pulls the image, pairs the Hue Bridge, selects the Entertainment area, generates lamp-ID mappings, and starts the service:
+
+```bash
+./docker/setup.sh
+```
+
+Pass the bridge address as an optional argument, for example `./docker/setup.sh 192.168.1.10`. The script refuses to overwrite an existing configuration.
+
 ```bash
 cd docker
 mkdir -p data/default
@@ -43,7 +51,7 @@ docker compose up -d
 docker compose logs -f bridge
 ```
 
-Use [docker/compose.multiple.example.yaml](docker/compose.multiple.example.yaml) for multiple isolated deployments. Each instance gets its own configuration directory and must target a different Hue Entertainment area or bridge. The [Docker quick start](docker/README.md) includes ready-to-copy lamp and channel configuration examples; [docker/DEPLOYMENT.md](docker/DEPLOYMENT.md) covers registry tags, local builds, UID/GID handling, and host-network limitations in detail.
+Use [docker/compose.multiple.example.yaml](docker/compose.multiple.example.yaml) for multiple isolated deployments. Each instance gets its own configuration directory and must target a different Hue Entertainment area or bridge. The [Docker quick start](docker/README.md) includes ready-to-copy lamp and channel configuration examples, and [docker/local-test/README.md](docker/local-test/README.md) explains isolated local-image testing. [docker/DEPLOYMENT.md](docker/DEPLOYMENT.md) covers registry tags, local builds, UID/GID handling, and host-network limitations in detail.
 
 ## Initial setup
 

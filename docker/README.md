@@ -55,4 +55,6 @@ cd ..
 docker compose -f compose.build.yaml up -d --build
 ```
 
+For an isolated test using its own configuration, see [local-test/README.md](local-test/README.md).
+
 For networking details, image tags, and Docker Desktop notes, see [DEPLOYMENT.md](DEPLOYMENT.md).

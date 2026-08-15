@@ -1,0 +1,13 @@
+name: artnet-hue-entertainment-local-test
+
+services:
+  bridge:
+    image: artnet-hue-entertainment:local
+    pull_policy: never
+    init: true
+    network_mode: host
+    restart: "no"
+    user: "${ARTNET_HUE_UID:-1000}:${ARTNET_HUE_GID:-1000}"
+    volumes:
+      - ../data/local-test:/data
+    command: ["run", "--config", "/data/config.json"]
