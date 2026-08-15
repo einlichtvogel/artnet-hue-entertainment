@@ -23,7 +23,7 @@ Use `hue.lights` for normal installations. `lightId` is the familiar numeric Hue
 ]
 ```
 
-A normal bulb resolves to one Hue Entertainment channel. For a gradient light, lamp-ID mode sends the same DMX color to all of its segments. Run `auto-setup` to generate consecutive lamp-ID mappings automatically.
+A normal bulb resolves to one Hue Entertainment channel. For a gradient light, lamp-ID mode sends the same DMX color to all of its segments. Run `auto-setup` to generate consecutive lamp-ID mappings automatically. Add `--overwrite` when replacing existing `lights` or `channels` mappings.
 
 See [config.lights.example.json](config.lights.example.json) for a complete configuration.
 

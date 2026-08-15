@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const {parseCli, resolveConfiguredMappings} = require('../build/cli');
+const {parseCli, resolveConfiguredMappings, validateAutoSetupOverwrite} = require('../build/cli');
 
 test('CLI parses global config and command options', () => {
     assert.deepEqual(parseCli(['ping-light', '--id', '4', '--config', 'custom.json']), {
@@ -10,11 +10,24 @@ test('CLI parses global config and command options', () => {
         id: '4',
         ip: undefined,
         mode: undefined,
+        overwrite: false,
         configPath: 'custom.json',
         help: false,
     });
     assert.equal(parseCli(['auto-setup', '--mode', '16bit-dimmable']).mode, '16bit-dimmable');
+    assert.equal(parseCli(['auto-setup', '--overwrite']).overwrite, true);
     assert.throws(() => parseCli(['auto-setup', '--mode', 'invalid']), /--mode must be one of/);
+});
+
+test('auto-setup requires explicit permission to replace mappings', () => {
+    const empty = {artnet: {host: '0.0.0.0', universe: 0}, hue: {}};
+    const mapped = {
+        artnet: empty.artnet,
+        hue: {lights: [{lightId: '1', dmxStart: 1, channelMode: '8bit'}]},
+    };
+    assert.doesNotThrow(() => validateAutoSetupOverwrite(empty, false));
+    assert.throws(() => validateAutoSetupOverwrite(mapped, false), /--overwrite/);
+    assert.doesNotThrow(() => validateAutoSetupOverwrite(mapped, true));
 });
 
 test('configured v2 channels must exactly cover the selected area', async () => {

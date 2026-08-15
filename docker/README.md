@@ -16,7 +16,13 @@ You can optionally provide the Hue Bridge address directly:
 ./docker/setup.sh 192.168.1.10
 ```
 
-The script checks Docker, creates `data/default/config.json`, pulls the current image, pairs with the bridge, shows the available Entertainment areas, sets the Art-Net universe, asks for the DMX mode, calculates consecutive lamp addresses using that mode's width, and starts the service. It never overwrites an existing configuration.
+The script checks Docker, creates `data/default/config.json`, pulls the current image, pairs with the bridge, shows the available Entertainment areas, sets the Art-Net universe, asks for the DMX mode, assigns consecutive addresses from the lowest light ID upward, and starts the service. It never overwrites an existing configuration unless `--overwrite` is provided.
+
+To replace an existing setup deliberately, use `--overwrite`. The previous configuration is backed up and restored automatically if the new setup fails:
+
+```bash
+./docker/setup.sh --overwrite 192.168.1.10
+```
 
 For manual setup, enter this directory and copy the recommended example:
 
@@ -27,6 +33,12 @@ cp config.lights.example.json data/default/config.json
 ```
 
 `auto-setup` creates the recommended lamp-ID mappings. Use `config.channels.example.json` only when you need advanced segment-level control with Hue Entertainment channel IDs.
+
+When running auto-setup manually against a configuration that already contains `lights` or `channels`, confirm replacement explicitly:
+
+```bash
+docker compose run --rm bridge auto-setup --overwrite --mode 16bit --config /data/config.json
+```
 
 See [LIGHT-MODES.md](LIGHT-MODES.md) for all supported DMX layouts, channel widths, addressing examples, and the difference between lamp and channel mappings.
 

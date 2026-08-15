@@ -6,6 +6,8 @@ For a shorter setup guide and ready-to-copy configurations, see [README.md](READ
 
 For a new installation, `./setup.sh` performs the pairing, area selection, DMX mode selection, correctly spaced lamp mapping, and service startup interactively. It refuses to replace an existing `data/default/config.json`.
 
+Use `./setup.sh --overwrite [bridge-ip]` to replace an existing configuration deliberately. The script creates a uniquely named `config.json.backup.*` file and restores it automatically if the replacement setup fails. Auto-setup assigns DMX ranges from the lowest numeric Hue light ID to the highest.
+
 ## Single instance
 
 Run the commands in this document from the `docker/` directory. Create a host directory that the container user can write. The default UID/GID is 1000; override it when the host account uses different IDs.
@@ -28,7 +30,7 @@ For a fresh configuration, pair and generate lamp-ID mappings from inside tempor
 ```bash
 docker compose run --rm bridge pair --ip 192.168.1.10 --config /data/config.json
 docker compose run --rm bridge list-areas --config /data/config.json
-docker compose run --rm bridge auto-setup --config /data/config.json
+docker compose run --rm bridge auto-setup --overwrite --config /data/config.json
 ```
 
 Then start and inspect the service:

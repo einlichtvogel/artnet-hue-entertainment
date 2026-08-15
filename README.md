@@ -39,7 +39,7 @@ For a new installation, run the interactive setup from the repository root. It p
 ./docker/setup.sh
 ```
 
-Pass the bridge address as an optional argument, for example `./docker/setup.sh 192.168.1.10`. The script asks for the bulb DMX mode and calculates consecutive channel addresses using the selected mode's width. It refuses to overwrite an existing configuration.
+Pass the bridge address as an optional argument, for example `./docker/setup.sh 192.168.1.10`. The script asks for the bulb DMX mode and assigns consecutive channel addresses from the lowest light ID upward. It refuses to overwrite an existing configuration unless `--overwrite` is provided, and retains the previous file as a backup during replacement setup.
 
 ```bash
 cd docker
@@ -77,7 +77,7 @@ Use [docker/compose.multiple.example.yaml](docker/compose.multiple.example.yaml)
 
    ```bash
    artnet-hue-entertainment list-channels
-   artnet-hue-entertainment auto-setup
+   artnet-hue-entertainment auto-setup --overwrite
    ```
 
 5. Start streaming:
@@ -161,7 +161,7 @@ Use `list-channels` to discover those IDs. Explicit channels are also the fallba
 | `ping-light --id <id-or-uuid>` | Flash one light; use `all` for all lights. |
 | `ping-lights` | Flash all lights in sequence. |
 | `rename-lights-after-id` | Rename Hue devices to `Light <legacy-id>`. |
-| `auto-setup` | Generate consecutive four-channel dimmable mappings using lamp IDs. |
+| `auto-setup [--mode <mode>] [--overwrite]` | Generate consecutive lamp-ID mappings; `--overwrite` is required to replace existing mappings. |
 | `run` | Start the Art-Net receiver and Hue Entertainment stream. |
 
 ## Troubleshooting

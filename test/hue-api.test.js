@@ -72,6 +72,27 @@ test('auto-setup calculates consecutive addresses for every channel mode', () =>
     }
 });
 
+test('auto-setup assigns addresses in ascending numeric light ID order', () => {
+    const area = {
+        id: AREA.id,
+        channels: [
+            {channel_id: 2, members: [{service: {rid: 'service-10', rtype: 'entertainment'}}]},
+            {channel_id: 0, members: [{service: {rid: 'service-2', rtype: 'entertainment'}}]},
+            {channel_id: 1, members: [{service: {rid: 'service-1', rtype: 'entertainment'}}]},
+        ],
+    };
+    const services = [
+        {id: 'service-10', id_v1: '/lights/10'},
+        {id: 'service-2', id_v1: '/lights/2'},
+        {id: 'service-1', id_v1: '/lights/1'},
+    ];
+    assert.deepEqual(createLightAutoSetupMappings(area, services, '16bit'), [
+        {lightId: '1', dmxStart: 1, channelMode: '16bit'},
+        {lightId: '2', dmxStart: 7, channelMode: '16bit'},
+        {lightId: '10', dmxStart: 13, channelMode: '16bit'},
+    ]);
+});
+
 test('auto-setup requires explicit channel mode when a bridge exposes no legacy light ID', () => {
     assert.throws(() => createLightAutoSetupMappings(AREA, []), /explicit hue\.channels/);
 });

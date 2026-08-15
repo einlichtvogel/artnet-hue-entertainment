@@ -7,20 +7,47 @@ CONFIG_DIR="$SCRIPT_DIR/data/default"
 CONFIG_FILE="$CONFIG_DIR/config.json"
 EXAMPLE_FILE="$SCRIPT_DIR/config.lights.example.json"
 
+OVERWRITE_CONFIG=0
+BRIDGE_IP=
+
+usage() {
+    printf 'Usage: %s [--overwrite] [bridge-ip]\n' "$0"
+    printf '\nOptions:\n'
+    printf '  --overwrite  Replace an existing configuration after creating a backup.\n'
+    printf '  -h, --help   Show this help.\n'
+}
+
 fail() {
     printf 'Error: %s\n' "$1" >&2
     exit 1
 }
 
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --overwrite) OVERWRITE_CONFIG=1 ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -*) fail "Unknown option: $1" ;;
+        *)
+            if [ -n "$BRIDGE_IP" ]; then
+                fail "Only one Hue Bridge IP address may be provided."
+            fi
+            BRIDGE_IP=$1
+            ;;
+    esac
+    shift
+done
+
 command -v docker >/dev/null 2>&1 || fail "Docker is not installed or not available in PATH."
 docker compose version >/dev/null 2>&1 || fail "Docker Compose v2 is not available."
 docker info >/dev/null 2>&1 || fail "The Docker daemon is not running."
 
-if [ -e "$CONFIG_FILE" ]; then
-    fail "$CONFIG_FILE already exists. Move or remove it before running initial setup again."
+if [ -e "$CONFIG_FILE" ] && [ "$OVERWRITE_CONFIG" -ne 1 ]; then
+    fail "$CONFIG_FILE already exists. Use --overwrite to replace it safely."
 fi
 
-BRIDGE_IP=${1:-}
 while [ -z "$BRIDGE_IP" ]; do
     printf 'Hue Bridge IP address: '
     IFS= read -r BRIDGE_IP
@@ -58,6 +85,12 @@ export ARTNET_HUE_UID=${ARTNET_HUE_UID:-$(id -u)}
 export ARTNET_HUE_GID=${ARTNET_HUE_GID:-$(id -g)}
 
 mkdir -p "$CONFIG_DIR"
+BACKUP_FILE=
+if [ -e "$CONFIG_FILE" ]; then
+    BACKUP_FILE=$(mktemp "$CONFIG_FILE.backup.XXXXXX")
+    cp "$CONFIG_FILE" "$BACKUP_FILE"
+    chmod 600 "$BACKUP_FILE"
+fi
 cp "$EXAMPLE_FILE" "$CONFIG_FILE"
 chmod 600 "$CONFIG_FILE"
 
@@ -66,8 +99,13 @@ cleanup() {
     status=$?
     trap - EXIT HUP INT TERM
     if [ "$status" -ne 0 ] && [ "$CLEAN_INCOMPLETE_CONFIG" -eq 1 ]; then
-        rm -f "$CONFIG_FILE"
-        printf 'Removed incomplete configuration: %s\n' "$CONFIG_FILE" >&2
+        if [ -n "$BACKUP_FILE" ] && [ -e "$BACKUP_FILE" ]; then
+            mv -f "$BACKUP_FILE" "$CONFIG_FILE"
+            printf 'Restored previous configuration: %s\n' "$CONFIG_FILE" >&2
+        else
+            rm -f "$CONFIG_FILE"
+            printf 'Removed incomplete configuration: %s\n' "$CONFIG_FILE" >&2
+        fi
     fi
     exit "$status"
 }
@@ -109,7 +147,7 @@ fs.chmodSync(path, 0o600);
 '
 
 printf '\nGenerating lamp-ID mappings...\n'
-docker compose run --rm bridge auto-setup --mode "$LIGHT_MODE" --config /data/config.json
+docker compose run --rm bridge auto-setup --overwrite --mode "$LIGHT_MODE" --config /data/config.json
 
 CLEAN_INCOMPLETE_CONFIG=0
 
@@ -117,4 +155,7 @@ printf '\nStarting the bridge...\n'
 docker compose up -d
 
 printf '\nSetup complete. Configuration: %s\n' "$CONFIG_FILE"
+if [ -n "$BACKUP_FILE" ]; then
+    printf 'Previous configuration backup: %s\n' "$BACKUP_FILE"
+fi
 printf 'Follow logs with: cd %s && docker compose logs -f bridge\n' "$SCRIPT_DIR"

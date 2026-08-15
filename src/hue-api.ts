@@ -246,11 +246,9 @@ export function createLightAutoSetupMappings(
     }
 
     const parent = new Map<string, string>();
-    const orderedLightIds: string[] = [];
     const add = (lightId: string) => {
         if (!parent.has(lightId)) {
             parent.set(lightId, lightId);
-            orderedLightIds.push(lightId);
         }
     };
     const find = (lightId: string): string => {
@@ -283,6 +281,9 @@ export function createLightAutoSetupMappings(
         lightIds.slice(1).forEach(lightId => union(lightIds[0]!, lightId));
     }
 
+    const orderedLightIds = [...parent.keys()].sort((first, second) => (
+        Number(first) - Number(second)
+    ));
     const dmxStartByRoot = new Map<string, number>();
     let nextDmxStart = 1;
     for (const lightId of orderedLightIds) {

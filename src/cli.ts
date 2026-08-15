@@ -34,6 +34,7 @@ interface ParsedCli {
     ip?: string;
     id?: string;
     mode?: ChannelMode;
+    overwrite: boolean;
     help: boolean;
 }
 
@@ -90,6 +91,7 @@ export function parseCli(argv: string[]): ParsedCli {
             ip: {type: 'string'},
             id: {type: 'string'},
             mode: {type: 'string'},
+            overwrite: {type: 'boolean'},
             help: {type: 'boolean', short: 'h'},
         },
     });
@@ -106,6 +108,7 @@ export function parseCli(argv: string[]): ParsedCli {
         ip: result.values.ip,
         id: result.values.id,
         mode: mode as ChannelMode | undefined,
+        overwrite: result.values.overwrite ?? false,
         help: result.values.help ?? false,
     };
 }
@@ -271,6 +274,7 @@ async function renameLightsAfterId(parsed: ParsedCli): Promise<number> {
 
 async function autoSetup(parsed: ParsedCli): Promise<number> {
     const {configuration, api} = await getPairedConfiguration(parsed.configPath);
+    validateAutoSetupOverwrite(configuration, parsed.overwrite);
     const area = selectEntertainmentConfiguration(
         await api.getEntertainmentConfigurations(),
         configuration.hue.entertainmentConfigurationId,
@@ -287,6 +291,14 @@ async function autoSetup(parsed: ParsedCli): Promise<number> {
         console.log(` - Light ${light.lightId}: DMX ${light.dmxStart}-${light.dmxStart + channelWidth(light.channelMode) - 1} (${light.channelMode})`);
     });
     return 0;
+}
+
+export function validateAutoSetupOverwrite(configuration: AppConfiguration, overwrite: boolean): void {
+    const hasExistingMappings = (configuration.hue.lights?.length ?? 0) > 0
+        || (configuration.hue.channels?.length ?? 0) > 0;
+    if (hasExistingMappings && !overwrite) {
+        throw new Error('Hue light mappings already exist. Run auto-setup with --overwrite to replace them.');
+    }
 }
 
 export async function resolveConfiguredMappings(
@@ -355,12 +367,13 @@ Commands:
   ping-light --id <id|uuid>    Flash one light; use "all" for every light
   ping-lights                  Flash every light in sequence
   rename-lights-after-id       Rename devices using their legacy light IDs
-  auto-setup [--mode <mode>]   Map selected-area lights to consecutive DMX slots
+  auto-setup [options]         Map selected-area lights to consecutive DMX slots
   run                          Start the Art-Net to Hue bridge
 
 Global options:
   --config <path>              Configuration file (default: config.json)
   --mode <mode>                DMX mode for auto-setup (default: 8bit-dimmable)
+  --overwrite                  Replace existing light or channel mappings
   -h, --help                   Show this help`);
 }
 
