@@ -2,6 +2,7 @@ import {EventEmitter} from 'node:events';
 import {ArtNetController} from 'artnet-protocol/dist';
 import {ArtDmx} from 'artnet-protocol/dist/protocol';
 import {decodeColor, channelWidth} from './dmx';
+import {WildcardArtNetReceiver} from './artnet-wildcard';
 import {HueApiClient} from './hue-api';
 import {ColorUpdate, HueStreamController} from './hue-stream';
 import {ChannelMapping} from './types';
@@ -34,7 +35,9 @@ export interface ArtNetReceiver {
     bind(host?: string): void;
     close(): Promise<void>;
     on(event: 'dmx', listener: (dmx: ArtDmx) => void): this;
+    on(event: 'error', listener: (error: Error) => void): this;
     off(event: 'dmx', listener: (dmx: ArtDmx) => void): this;
+    off(event: 'error', listener: (error: Error) => void): this;
 }
 
 export interface BridgeDependencies {
@@ -69,15 +72,19 @@ export class ArtNetHueBridge extends EventEmitter {
                 configuration.hueClientKey,
                 configuration.entertainmentConfigurationId,
             );
-        this.artNet = dependencies.artNet ?? new ArtNetController();
         this.now = dependencies.now ?? Date.now;
         this.logger = dependencies.logger ?? console;
+        this.artNet = dependencies.artNet ?? (
+            configuration.artNetBindIp === '0.0.0.0' || configuration.artNetBindIp === '::'
+                ? new WildcardArtNetReceiver(undefined, this.logger)
+                : new ArtNetController()
+        );
         this.onDmxData = this.onDmxData.bind(this);
     }
 
     async start(): Promise<void> {
-        this.stream.on('error', error => this.handleStreamFailure(error));
-        this.stream.on('close', () => this.handleStreamFailure(new Error('Hue DTLS stream closed unexpectedly')));
+        this.stream.on('error', error => this.handleRuntimeFailure(error));
+        this.stream.on('close', () => this.handleRuntimeFailure(new Error('Hue DTLS stream closed unexpectedly')));
         try {
             this.logger.log('Requesting Hue Entertainment v2 streaming mode...');
             await this.hueApi.setEntertainmentState(this.configuration.entertainmentConfigurationId, 'start');
@@ -89,6 +96,7 @@ export class ArtNetHueBridge extends EventEmitter {
             this.artNet.nameLong = 'ArtNet Hue Entertainment';
             this.artNet.nameShort = 'ArtNet Hue';
             this.artNet.on('dmx', this.onDmxData);
+            this.artNet.on('error', this.onArtNetError);
             this.artNet.bind(this.configuration.artNetBindIp);
             this.artNetBound = true;
 
@@ -116,6 +124,7 @@ export class ArtNetHueBridge extends EventEmitter {
     private async closeResources(): Promise<void> {
         const errors: Error[] = [];
         this.artNet.off('dmx', this.onDmxData);
+        this.artNet.off('error', this.onArtNetError);
         await this.stream.close().catch(error => errors.push(asError(error)));
         if (this.artNetBound) {
             await this.artNet.close().catch(error => errors.push(asError(error)));
@@ -158,14 +167,18 @@ export class ArtNetHueBridge extends EventEmitter {
         this.stream.sendUpdates(updates);
     }
 
-    private handleStreamFailure(error: Error): void {
+    private handleRuntimeFailure(error: Error): void {
         if (this.closePromise) {
             return;
         }
         this.close()
-            .catch(closeError => this.logger.error('Cleanup after Hue stream failure failed:', closeError))
+            .catch(closeError => this.logger.error('Cleanup after runtime failure failed:', closeError))
             .finally(() => this.emit('error', error));
     }
+
+    private readonly onArtNetError = (error: Error): void => {
+        this.handleRuntimeFailure(error);
+    };
 }
 
 function asError(error: unknown): Error {
