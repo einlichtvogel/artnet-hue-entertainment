@@ -39,7 +39,7 @@ For a new installation, run the interactive setup from the repository root. It p
 ./docker/setup.sh
 ```
 
-Pass the bridge address as an optional argument, for example `./docker/setup.sh 192.168.1.10`. The script refuses to overwrite an existing configuration.
+Pass the bridge address as an optional argument, for example `./docker/setup.sh 192.168.1.10`. The script asks for the bulb DMX mode and calculates consecutive channel addresses using the selected mode's width. It refuses to overwrite an existing configuration.
 
 ```bash
 cd docker
@@ -127,6 +127,7 @@ The file contains credentials and is written with owner-only permissions. Do not
 - `8bit`: `R, G, B` (3 channels)
 - `8bit-dimmable`: `Dimmer, R, G, B` (4 channels, recommended)
 - `16bit`: `R, R fine, G, G fine, B, B fine` (6 channels)
+- `16bit-dimmable`: `Dimmer, Dimmer fine, R, R fine, G, G fine, B, B fine` (8 channels)
 
 See [docker/LIGHT-MODES.md](docker/LIGHT-MODES.md) for detailed channel tables, addressing examples, lamp-ID mappings, and advanced Hue channel mappings.
 

@@ -36,6 +36,24 @@ if [ "$ARTNET_UNIVERSE" -gt 32767 ]; then
     fail "The Art-Net universe must be an integer between 0 and 32767."
 fi
 
+printf '\nSelect the DMX mode for all bulbs:\n'
+printf '  1) 8bit            (RGB, 3 channels)\n'
+printf '  2) 8bit-dimmable   (Dimmer + RGB, 4 channels; recommended)\n'
+printf '  3) 16bit           (RGB coarse/fine, 6 channels)\n'
+printf '  4) 16bit-dimmable  (Dimmer + RGB coarse/fine, 8 channels)\n'
+LIGHT_MODE=
+while [ -z "$LIGHT_MODE" ]; do
+    printf 'Mode [2]: '
+    IFS= read -r MODE_SELECTION
+    case "${MODE_SELECTION:-2}" in
+        1|8bit) LIGHT_MODE=8bit ;;
+        2|8bit-dimmable) LIGHT_MODE=8bit-dimmable ;;
+        3|16bit) LIGHT_MODE=16bit ;;
+        4|16bit-dimmable) LIGHT_MODE=16bit-dimmable ;;
+        *) printf 'Please select 1, 2, 3, or 4.\n' >&2 ;;
+    esac
+done
+
 export ARTNET_HUE_UID=${ARTNET_HUE_UID:-$(id -u)}
 export ARTNET_HUE_GID=${ARTNET_HUE_GID:-$(id -g)}
 
@@ -91,7 +109,7 @@ fs.chmodSync(path, 0o600);
 '
 
 printf '\nGenerating lamp-ID mappings...\n'
-docker compose run --rm bridge auto-setup --config /data/config.json
+docker compose run --rm bridge auto-setup --mode "$LIGHT_MODE" --config /data/config.json
 
 CLEAN_INCOMPLETE_CONFIG=0
 

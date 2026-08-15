@@ -54,6 +54,24 @@ test('auto-setup writes one lamp mapping for all segments of a gradient light', 
     ]);
 });
 
+test('auto-setup calculates consecutive addresses for every channel mode', () => {
+    const services = [
+        {id: 'service-1', id_v1: '/lights/1'},
+        {id: 'service-2', id_v1: '/lights/2'},
+    ];
+    for (const [mode, width] of [
+        ['8bit', 3],
+        ['8bit-dimmable', 4],
+        ['16bit', 6],
+        ['16bit-dimmable', 8],
+    ]) {
+        assert.deepEqual(createLightAutoSetupMappings(AREA, services, mode), [
+            {lightId: '1', dmxStart: 1, channelMode: mode},
+            {lightId: '2', dmxStart: 1 + width, channelMode: mode},
+        ]);
+    }
+});
+
 test('auto-setup requires explicit channel mode when a bridge exposes no legacy light ID', () => {
     assert.throws(() => createLightAutoSetupMappings(AREA, []), /explicit hue\.channels/);
 });

@@ -1,4 +1,4 @@
-export const CHANNEL_MODES = ['8bit', '8bit-dimmable', '16bit'] as const;
+export const CHANNEL_MODES = ['8bit', '8bit-dimmable', '16bit', '16bit-dimmable'] as const;
 
 export type ChannelMode = typeof CHANNEL_MODES[number];
 export type Rgb16 = [number, number, number];

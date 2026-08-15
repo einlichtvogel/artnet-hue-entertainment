@@ -9,9 +9,12 @@ test('CLI parses global config and command options', () => {
         command: 'ping-light',
         id: '4',
         ip: undefined,
+        mode: undefined,
         configPath: 'custom.json',
         help: false,
     });
+    assert.equal(parseCli(['auto-setup', '--mode', '16bit-dimmable']).mode, '16bit-dimmable');
+    assert.throws(() => parseCli(['auto-setup', '--mode', 'invalid']), /--mode must be one of/);
 });
 
 test('configured v2 channels must exactly cover the selected area', async () => {

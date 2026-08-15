@@ -2,6 +2,7 @@
 import {parseArgs} from 'node:util';
 import {setTimeout as delay} from 'node:timers/promises';
 import {ArtNetHueBridge} from './bridge';
+import {channelWidth} from './dmx';
 import {
     DEFAULT_CONFIG_PATH,
     loadConfiguration,
@@ -18,7 +19,9 @@ import {
 } from './hue-api';
 import {
     AppConfiguration,
+    CHANNEL_MODES,
     ChannelMapping,
+    ChannelMode,
     DeviceResource,
     EntertainmentConfiguration,
     EntertainmentService,
@@ -30,6 +33,7 @@ interface ParsedCli {
     configPath: string;
     ip?: string;
     id?: string;
+    mode?: ChannelMode;
     help: boolean;
 }
 
@@ -85,17 +89,23 @@ export function parseCli(argv: string[]): ParsedCli {
             config: {type: 'string'},
             ip: {type: 'string'},
             id: {type: 'string'},
+            mode: {type: 'string'},
             help: {type: 'boolean', short: 'h'},
         },
     });
     if (result.positionals.length > 1) {
         throw new Error(`Unexpected arguments: ${result.positionals.slice(1).join(' ')}`);
     }
+    const mode = result.values.mode;
+    if (mode !== undefined && !CHANNEL_MODES.includes(mode as ChannelMode)) {
+        throw new Error(`--mode must be one of ${CHANNEL_MODES.join(', ')}`);
+    }
     return {
         command: result.positionals[0],
         configPath: result.values.config ?? DEFAULT_CONFIG_PATH,
         ip: result.values.ip,
         id: result.values.id,
+        mode: mode as ChannelMode | undefined,
         help: result.values.help ?? false,
     };
 }
@@ -266,14 +276,15 @@ async function autoSetup(parsed: ParsedCli): Promise<number> {
         configuration.hue.entertainmentConfigurationId,
     );
     const services = await api.getEntertainmentServices();
-    const lights = createLightAutoSetupMappings(area, services);
+    const mode = parsed.mode ?? '8bit-dimmable';
+    const lights = createLightAutoSetupMappings(area, services, mode);
     configuration.hue.entertainmentConfigurationId = area.id;
     configuration.hue.lights = lights;
     delete configuration.hue.channels;
     await saveConfiguration(configuration, parsed.configPath);
     console.log(`Configured ${lights.length} Hue lights for ${area.metadata?.name ?? area.id}:`);
     lights.forEach(light => {
-        console.log(` - Light ${light.lightId}: DMX ${light.dmxStart}-${light.dmxStart + 3}`);
+        console.log(` - Light ${light.lightId}: DMX ${light.dmxStart}-${light.dmxStart + channelWidth(light.channelMode) - 1} (${light.channelMode})`);
     });
     return 0;
 }
@@ -344,11 +355,12 @@ Commands:
   ping-light --id <id|uuid>    Flash one light; use "all" for every light
   ping-lights                  Flash every light in sequence
   rename-lights-after-id       Rename devices using their legacy light IDs
-  auto-setup                   Map selected-area lights to consecutive DMX slots
+  auto-setup [--mode <mode>]   Map selected-area lights to consecutive DMX slots
   run                          Start the Art-Net to Hue bridge
 
 Global options:
   --config <path>              Configuration file (default: config.json)
+  --mode <mode>                DMX mode for auto-setup (default: 8bit-dimmable)
   -h, --help                   Show this help`);
 }
 

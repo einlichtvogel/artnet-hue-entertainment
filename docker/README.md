@@ -16,7 +16,7 @@ You can optionally provide the Hue Bridge address directly:
 ./docker/setup.sh 192.168.1.10
 ```
 
-The script checks Docker, creates `data/default/config.json`, pulls the current image, pairs with the bridge, shows the available Entertainment areas, sets the Art-Net universe, generates lamp-ID mappings, and starts the service. It never overwrites an existing configuration.
+The script checks Docker, creates `data/default/config.json`, pulls the current image, pairs with the bridge, shows the available Entertainment areas, sets the Art-Net universe, asks for the DMX mode, calculates consecutive lamp addresses using that mode's width, and starts the service. It never overwrites an existing configuration.
 
 For manual setup, enter this directory and copy the recommended example:
 

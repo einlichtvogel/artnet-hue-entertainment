@@ -4,7 +4,7 @@ The ready-to-use Compose files pull `ghcr.io/einlichtvogel/artnet-hue-entertainm
 
 For a shorter setup guide and ready-to-copy configurations, see [README.md](README.md).
 
-For a new installation, `./setup.sh` performs the pairing, area selection, lamp mapping, and service startup interactively. It refuses to replace an existing `data/default/config.json`.
+For a new installation, `./setup.sh` performs the pairing, area selection, DMX mode selection, correctly spaced lamp mapping, and service startup interactively. It refuses to replace an existing `data/default/config.json`.
 
 ## Single instance
 

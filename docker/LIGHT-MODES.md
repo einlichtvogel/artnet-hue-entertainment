@@ -52,6 +52,7 @@ See [config.channels.example.json](config.channels.example.json) for a complete 
 | `8bit` | 3 | Red, Green, Blue | Standard RGB with 256 values per color. |
 | `8bit-dimmable` | 4 | Dimmer, Red, Green, Blue | RGB multiplied by a master dimmer; recommended for lighting consoles. |
 | `16bit` | 6 | Red coarse, Red fine, Green coarse, Green fine, Blue coarse, Blue fine | High-resolution RGB with 65,536 values per color. |
+| `16bit-dimmable` | 8 | Dimmer coarse/fine, then RGB coarse/fine | High-resolution RGB multiplied by a high-resolution master dimmer. |
 
 ### `8bit`
 
@@ -92,6 +93,23 @@ For `dmxStart: 1`, the mapping consumes DMX channels 1–6:
 | 6 | Blue fine | 0–255 |
 
 Each 16-bit color value is calculated as `coarse × 256 + fine`. The next non-overlapping mapping can start at channel 7.
+
+### `16bit-dimmable`
+
+For `dmxStart: 1`, the mapping consumes DMX channels 1–8:
+
+| DMX channel | Function | Range |
+| ---: | --- | ---: |
+| 1 | Master dimmer coarse | 0–255 |
+| 2 | Master dimmer fine | 0–255 |
+| 3 | Red coarse | 0–255 |
+| 4 | Red fine | 0–255 |
+| 5 | Green coarse | 0–255 |
+| 6 | Green fine | 0–255 |
+| 7 | Blue coarse | 0–255 |
+| 8 | Blue fine | 0–255 |
+
+The 16-bit dimmer scales all three 16-bit colors. Dimmer `0, 0` produces black; `255, 255` applies the full RGB values. The next non-overlapping mapping can start at channel 9.
 
 ## Addressing rules
 

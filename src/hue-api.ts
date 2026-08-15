@@ -3,12 +3,14 @@ import {Agent} from 'node:https';
 import {connect as connectTls} from 'node:tls';
 import {
     ChannelMapping,
+    ChannelMode,
     DeviceResource,
     EntertainmentConfiguration,
     EntertainmentService,
     LegacyLightMapping,
     LightResource,
 } from './types';
+import {channelWidth} from './dmx';
 
 interface HueEnvelope<T> {
     data?: T[];
@@ -233,6 +235,7 @@ export function resolveLegacyMappings(
 export function createLightAutoSetupMappings(
     area: EntertainmentConfiguration,
     services: readonly EntertainmentService[],
+    channelMode: ChannelMode = '8bit-dimmable',
 ): LegacyLightMapping[] {
     const lightIdByService = new Map<string, string>();
     for (const service of services) {
@@ -281,16 +284,18 @@ export function createLightAutoSetupMappings(
     }
 
     const dmxStartByRoot = new Map<string, number>();
+    let nextDmxStart = 1;
     for (const lightId of orderedLightIds) {
         const root = find(lightId);
         if (!dmxStartByRoot.has(root)) {
-            dmxStartByRoot.set(root, dmxStartByRoot.size * 4 + 1);
+            dmxStartByRoot.set(root, nextDmxStart);
+            nextDmxStart += channelWidth(channelMode);
         }
     }
     return orderedLightIds.map(lightId => ({
         lightId,
         dmxStart: dmxStartByRoot.get(find(lightId))!,
-        channelMode: '8bit-dimmable',
+        channelMode,
     }));
 }
 

@@ -11,6 +11,8 @@ export function channelWidth(mode: ChannelMode): number {
             return 4;
         case '16bit':
             return 6;
+        case '16bit-dimmable':
+            return 8;
     }
 }
 
@@ -37,11 +39,19 @@ export function decodeColor(mode: ChannelMode, values: readonly number[]): Rgb16
             clamp16(Math.round(values[3]! * 257 * dimmer)),
         ];
     }
+    if (mode === '16bit') {
+        return [decode16(values, 0), decode16(values, 2), decode16(values, 4)];
+    }
+    const dimmer = decode16(values, 0) / UINT16_MAX;
     return [
-        (values[0]! << 8) + values[1]!,
-        (values[2]! << 8) + values[3]!,
-        (values[4]! << 8) + values[5]!,
+        clamp16(Math.round(decode16(values, 2) * dimmer)),
+        clamp16(Math.round(decode16(values, 4) * dimmer)),
+        clamp16(Math.round(decode16(values, 6) * dimmer)),
     ];
+}
+
+function decode16(values: readonly number[], offset: number): number {
+    return (values[offset]! << 8) + values[offset + 1]!;
 }
 
 function clamp16(value: number): number {
