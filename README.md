@@ -42,7 +42,7 @@ docker compose up -d
 docker compose logs -f bridge
 ```
 
-Use [compose.multiple.example.yaml](compose.multiple.example.yaml) for multiple isolated deployments. Each instance gets its own configuration directory and must target a different Hue Entertainment area or bridge. See [docs/docker.md](docs/docker.md) for registry tags, pairing in a container, local image builds, UID/GID handling, multi-instance examples, and host-network limitations.
+Use [compose.multiple.example.yaml](compose.multiple.example.yaml) for multiple isolated deployments. Each instance gets its own configuration directory and must target a different Hue Entertainment area or bridge. The [Docker quick start](docker/README.md) includes ready-to-copy lamp and channel configuration examples; [docs/docker.md](docs/docker.md) covers registry tags, local builds, UID/GID handling, and host-network limitations in detail.
 
 ## Initial setup
 

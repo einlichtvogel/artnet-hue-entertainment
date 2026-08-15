@@ -2,6 +2,8 @@
 
 The ready-to-use Compose files pull `ghcr.io/einlichtvogel/artnet-hue-entertainment:latest`. The image runs the compiled Node.js application as an unprivileged user and stores the writable configuration under `/data/config.json`. It exposes Art-Net UDP port 6454; Hue HTTPS and DTLS connections are outbound.
 
+For a shorter setup guide and ready-to-copy configurations, see [`../docker/README.md`](../docker/README.md).
+
 ## Single instance
 
 Create a host directory that the container user can write. The default UID/GID is 1000; override it when the host account uses different IDs.
