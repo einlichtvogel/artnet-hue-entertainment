@@ -1,6 +1,6 @@
 # Docker quick start
 
-This folder contains the Dockerfile, Compose definitions, example configurations, and deployment documentation. The default Compose setup runs `ghcr.io/einlichtvogel/artnet-hue-entertainment:latest` with host networking so it can receive Art-Net broadcasts and reach the Hue Bridge directly.
+This folder contains only the files needed to deploy the published image: Compose definitions, example configurations, and runtime documentation. The default Compose setup runs `ghcr.io/einlichtvogel/artnet-hue-entertainment:latest` with host networking so it can receive Art-Net broadcasts and reach the Hue Bridge directly.
 
 ## Start one instance
 
@@ -51,10 +51,11 @@ docker compose pull
 docker compose up -d
 ```
 
-To build the checked-out source instead of pulling GHCR:
+Build files are kept in the repository root. To build and run the checked-out source instead of pulling GHCR:
 
 ```bash
-docker compose -f compose.yaml -f compose.build.yaml up -d --build
+cd ..
+docker compose -f compose.build.yaml up -d --build
 ```
 
 For networking details, image tags, and Docker Desktop notes, see [DEPLOYMENT.md](DEPLOYMENT.md).

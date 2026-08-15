@@ -1,8 +1,0 @@
-services:
-  bridge:
-    image: artnet-hue-entertainment:local
-    pull_policy: build
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-      target: runtime

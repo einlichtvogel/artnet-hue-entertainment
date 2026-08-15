@@ -67,16 +67,17 @@ Docker Desktop host networking must be enabled in Docker settings on supported m
 
 The `latest` image is built from the `main` branch for AMD64 and ARM64. Version tags such as `v1.2.3` additionally publish `1.2.3` and `1.2`. Every published image also gets an immutable `sha-<commit>` tag.
 
-To build the current checkout locally instead of pulling GHCR, apply the build override:
+To build and run the current checkout locally instead of pulling GHCR, use the development Compose file in the repository root:
 
 ```bash
-docker compose -f compose.yaml -f compose.build.yaml up -d --build
+cd ..
+docker compose -f compose.build.yaml up -d --build
 ```
 
 The image can also be used without Compose:
 
 ```bash
-docker build -f Dockerfile -t artnet-hue-entertainment:local ..
+docker build -f ../Dockerfile -t artnet-hue-entertainment:local ..
 docker run --rm --network host \
   --user "$(id -u):$(id -g)" \
   -v "$PWD/data/default:/data" \
@@ -87,4 +88,4 @@ Stop containers normally so the application can close DTLS and release the Hue E
 
 ## Publishing images
 
-The GitHub Actions workflow in `../.github/workflows/container.yml` runs the automated checks and builds the image on pull requests. Pushes to `main`, tags beginning with `v`, and manually dispatched runs publish to GitHub Container Registry. Publishing uses the repository's `GITHUB_TOKEN`; the repository must belong to `einlichtvogel` and GitHub Actions must have permission to create packages. No registry password is stored in the repository.
+The GitHub Actions workflow in `../.github/workflows/container.yml` uses the root `Dockerfile`, runs the automated checks, and builds the image on pull requests. Pushes to `main`, tags beginning with `v`, and manually dispatched runs publish to GitHub Container Registry. Publishing uses the repository's `GITHUB_TOKEN`; the repository must belong to `einlichtvogel` and GitHub Actions must have permission to create packages. No registry password is stored in the repository.
