@@ -1,10 +1,8 @@
 name: artnet-hue-entertainment-multiple
 
 x-artnet-hue-common: &artnet-hue-common
-  image: artnet-hue-entertainment:local
-  build:
-    context: .
-    target: runtime
+  image: ghcr.io/einlichtvogel/artnet-hue-entertainment:latest
+  pull_policy: always
   init: true
   network_mode: host
   restart: unless-stopped

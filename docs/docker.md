@@ -1,6 +1,6 @@
 # Docker deployment
 
-The image runs the compiled Node.js application as an unprivileged user and stores the writable configuration under `/data/config.json`. It exposes Art-Net UDP port 6454; Hue HTTPS and DTLS connections are outbound.
+The ready-to-use Compose files pull `ghcr.io/einlichtvogel/artnet-hue-entertainment:latest`. The image runs the compiled Node.js application as an unprivileged user and stores the writable configuration under `/data/config.json`. It exposes Art-Net UDP port 6454; Hue HTTPS and DTLS connections are outbound.
 
 ## Single instance
 
@@ -10,7 +10,7 @@ Create a host directory that the container user can write. The default UID/GID i
 mkdir -p docker-data/default
 export ARTNET_HUE_UID="$(id -u)"
 export ARTNET_HUE_GID="$(id -g)"
-docker compose build
+docker compose pull
 ```
 
 To reuse an existing configuration:
@@ -45,7 +45,7 @@ Each instance needs its own writable configuration directory, credentials, Enter
 mkdir -p docker-data/main docker-data/stage
 cp config-main.json docker-data/main/config.json
 cp config-stage.json docker-data/stage/config.json
-docker compose -f compose.multiple.example.yaml up -d --build
+docker compose -f compose.multiple.example.yaml up -d
 docker compose -f compose.multiple.example.yaml logs -f
 ```
 
@@ -63,6 +63,14 @@ Docker Desktop host networking must be enabled in Docker settings on supported m
 
 ## Image commands
 
+The `latest` image is built from the `main` branch for AMD64 and ARM64. Version tags such as `v1.2.3` additionally publish `1.2.3` and `1.2`. Every published image also gets an immutable `sha-<commit>` tag.
+
+To build the current checkout locally instead of pulling GHCR, apply the build override:
+
+```bash
+docker compose -f compose.yaml -f compose.build.yaml up -d --build
+```
+
 The image can also be used without Compose:
 
 ```bash
@@ -74,3 +82,7 @@ docker run --rm --network host \
 ```
 
 Stop containers normally so the application can close DTLS and release the Hue Entertainment area. Docker sends `SIGTERM` directly to the Node.js entrypoint, and the bridge performs its normal transactional shutdown.
+
+## Publishing images
+
+The GitHub Actions workflow in `.github/workflows/container.yml` runs the automated checks and builds the image on pull requests. Pushes to `main`, tags beginning with `v`, and manually dispatched runs publish to GitHub Container Registry. Publishing uses the repository's `GITHUB_TOKEN`; the repository must belong to `einlichtvogel` and GitHub Actions must have permission to create packages. No registry password is stored in the repository.
