@@ -1,19 +1,20 @@
 # Docker quick start
 
-The Compose setup runs `ghcr.io/einlichtvogel/artnet-hue-entertainment:latest` with host networking so it can receive Art-Net broadcasts and reach the Hue Bridge directly.
+This folder contains the Dockerfile, Compose definitions, example configurations, and deployment documentation. The default Compose setup runs `ghcr.io/einlichtvogel/artnet-hue-entertainment:latest` with host networking so it can receive Art-Net broadcasts and reach the Hue Bridge directly.
 
 ## Start one instance
 
-From the repository root:
+Enter this directory and create the writable configuration directory:
 
 ```bash
-mkdir -p docker-data/default
-cp docker/config.lights.example.json docker-data/default/config.json
+cd docker
+mkdir -p data/default
+cp config.lights.example.json data/default/config.json
 export ARTNET_HUE_UID="$(id -u)"
 export ARTNET_HUE_GID="$(id -g)"
 ```
 
-Edit `docker-data/default/config.json`. Set the Hue Bridge address, credentials, Entertainment area UUID, Art-Net universe, and lamp IDs. Then start the service:
+Edit `data/default/config.json`. Set the Hue Bridge address, credentials, Entertainment area UUID, Art-Net universe, and lamp IDs. Then start the service:
 
 ```bash
 docker compose up -d
@@ -35,9 +36,9 @@ docker compose run --rm bridge auto-setup --config /data/config.json
 Give every instance its own directory and configuration:
 
 ```bash
-mkdir -p docker-data/main docker-data/stage
-cp docker/config.lights.example.json docker-data/main/config.json
-cp docker/config.lights.example.json docker-data/stage/config.json
+mkdir -p data/main data/stage
+cp config.lights.example.json data/main/config.json
+cp config.lights.example.json data/stage/config.json
 docker compose -f compose.multiple.example.yaml up -d
 ```
 
@@ -56,4 +57,4 @@ To build the checked-out source instead of pulling GHCR:
 docker compose -f compose.yaml -f compose.build.yaml up -d --build
 ```
 
-For networking details, image tags, and Docker Desktop notes, see [`../docs/docker.md`](../docs/docker.md).
+For networking details, image tags, and Docker Desktop notes, see [DEPLOYMENT.md](DEPLOYMENT.md).

@@ -34,15 +34,16 @@ npm run check
 The repository includes a ready-to-use Compose definition that pulls the latest multi-platform image from GitHub Container Registry. On Linux, host networking provides reliable Art-Net broadcast reception and direct Hue LAN access.
 
 ```bash
-mkdir -p docker-data/default
-cp config.json docker-data/default/config.json
+cd docker
+mkdir -p data/default
+cp ../config.json data/default/config.json
 export ARTNET_HUE_UID="$(id -u)"
 export ARTNET_HUE_GID="$(id -g)"
 docker compose up -d
 docker compose logs -f bridge
 ```
 
-Use [compose.multiple.example.yaml](compose.multiple.example.yaml) for multiple isolated deployments. Each instance gets its own configuration directory and must target a different Hue Entertainment area or bridge. The [Docker quick start](docker/README.md) includes ready-to-copy lamp and channel configuration examples; [docs/docker.md](docs/docker.md) covers registry tags, local builds, UID/GID handling, and host-network limitations in detail.
+Use [docker/compose.multiple.example.yaml](docker/compose.multiple.example.yaml) for multiple isolated deployments. Each instance gets its own configuration directory and must target a different Hue Entertainment area or bridge. The [Docker quick start](docker/README.md) includes ready-to-copy lamp and channel configuration examples; [docker/DEPLOYMENT.md](docker/DEPLOYMENT.md) covers registry tags, local builds, UID/GID handling, and host-network limitations in detail.
 
 ## Initial setup
 

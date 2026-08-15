@@ -9,5 +9,5 @@ services:
     restart: unless-stopped
     user: "${ARTNET_HUE_UID:-1000}:${ARTNET_HUE_GID:-1000}"
     volumes:
-      - ./docker-data/default:/data
+      - ./data/default:/data
     command: ["run", "--config", "/data/config.json"]

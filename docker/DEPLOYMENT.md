@@ -2,14 +2,14 @@
 
 The ready-to-use Compose files pull `ghcr.io/einlichtvogel/artnet-hue-entertainment:latest`. The image runs the compiled Node.js application as an unprivileged user and stores the writable configuration under `/data/config.json`. It exposes Art-Net UDP port 6454; Hue HTTPS and DTLS connections are outbound.
 
-For a shorter setup guide and ready-to-copy configurations, see [`../docker/README.md`](../docker/README.md).
+For a shorter setup guide and ready-to-copy configurations, see [README.md](README.md).
 
 ## Single instance
 
-Create a host directory that the container user can write. The default UID/GID is 1000; override it when the host account uses different IDs.
+Run the commands in this document from the `docker/` directory. Create a host directory that the container user can write. The default UID/GID is 1000; override it when the host account uses different IDs.
 
 ```bash
-mkdir -p docker-data/default
+mkdir -p data/default
 export ARTNET_HUE_UID="$(id -u)"
 export ARTNET_HUE_GID="$(id -g)"
 docker compose pull
@@ -18,7 +18,7 @@ docker compose pull
 To reuse an existing configuration:
 
 ```bash
-cp config.json docker-data/default/config.json
+cp ../config.json data/default/config.json
 ```
 
 For a fresh configuration, pair and generate lamp-ID mappings from inside temporary containers:
@@ -44,14 +44,14 @@ docker compose down
 Each instance needs its own writable configuration directory, credentials, Entertainment area, and DMX mapping. The example file defines `bridge-main` and `bridge-stage`:
 
 ```bash
-mkdir -p docker-data/main docker-data/stage
-cp config-main.json docker-data/main/config.json
-cp config-stage.json docker-data/stage/config.json
+mkdir -p data/main data/stage
+cp config.lights.example.json data/main/config.json
+cp config.lights.example.json data/stage/config.json
 docker compose -f compose.multiple.example.yaml up -d
 docker compose -f compose.multiple.example.yaml logs -f
 ```
 
-Add more services by copying one service block and assigning a new `docker-data/<name>` directory. Never mount the same configuration directory into two running instances.
+Add more services by copying one service block and assigning a new `data/<name>` directory. Never mount the same configuration directory into two running instances.
 
 Only one application can own a Hue Entertainment area at a time. Multiple containers must therefore use different areas or bridges.
 
@@ -76,10 +76,10 @@ docker compose -f compose.yaml -f compose.build.yaml up -d --build
 The image can also be used without Compose:
 
 ```bash
-docker build -t artnet-hue-entertainment:local .
+docker build -f Dockerfile -t artnet-hue-entertainment:local ..
 docker run --rm --network host \
   --user "$(id -u):$(id -g)" \
-  -v "$PWD/docker-data/default:/data" \
+  -v "$PWD/data/default:/data" \
   artnet-hue-entertainment:local list-lights --config /data/config.json
 ```
 
@@ -87,4 +87,4 @@ Stop containers normally so the application can close DTLS and release the Hue E
 
 ## Publishing images
 
-The GitHub Actions workflow in `.github/workflows/container.yml` runs the automated checks and builds the image on pull requests. Pushes to `main`, tags beginning with `v`, and manually dispatched runs publish to GitHub Container Registry. Publishing uses the repository's `GITHUB_TOKEN`; the repository must belong to `einlichtvogel` and GitHub Actions must have permission to create packages. No registry password is stored in the repository.
+The GitHub Actions workflow in `../.github/workflows/container.yml` runs the automated checks and builds the image on pull requests. Pushes to `main`, tags beginning with `v`, and manually dispatched runs publish to GitHub Container Registry. Publishing uses the repository's `GITHUB_TOKEN`; the repository must belong to `einlichtvogel` and GitHub Actions must have permission to create packages. No registry password is stored in the repository.

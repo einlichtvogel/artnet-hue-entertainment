@@ -7,4 +7,5 @@ node_modules/
 
 config.json
 docker-data/
+docker/data/
 *.tgz

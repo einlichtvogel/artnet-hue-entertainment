@@ -13,9 +13,9 @@ services:
   bridge-main:
     <<: *artnet-hue-common
     volumes:
-      - ./docker-data/main:/data
+      - ./data/main:/data
 
   bridge-stage:
     <<: *artnet-hue-common
     volumes:
-      - ./docker-data/stage:/data
+      - ./data/stage:/data
