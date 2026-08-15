@@ -1,0 +1,13 @@
+.git
+.github
+.idea
+.agents
+.codex
+.DS_Store
+node_modules
+build
+coverage
+docker-data
+config.json
+*.tgz
+npm-debug.log*

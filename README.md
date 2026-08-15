@@ -29,6 +29,21 @@ For development, run all compiler and automated checks with:
 npm run check
 ```
 
+## Docker
+
+The repository includes a multi-stage image and Compose definitions. On Linux, host networking provides reliable Art-Net broadcast reception and direct Hue LAN access.
+
+```bash
+mkdir -p docker-data/default
+cp config.json docker-data/default/config.json
+export ARTNET_HUE_UID="$(id -u)"
+export ARTNET_HUE_GID="$(id -g)"
+docker compose up -d --build
+docker compose logs -f bridge
+```
+
+Use [compose.multiple.example.yaml](compose.multiple.example.yaml) for multiple isolated deployments. Each instance gets its own configuration directory and must target a different Hue Entertainment area or bridge. See [docs/docker.md](docs/docker.md) for pairing in a container, UID/GID handling, multi-instance examples, and host-network limitations.
+
 ## Initial setup
 
 1. Discover the bridge, or use its known address:

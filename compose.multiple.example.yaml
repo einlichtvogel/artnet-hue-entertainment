@@ -1,0 +1,23 @@
+name: artnet-hue-entertainment-multiple
+
+x-artnet-hue-common: &artnet-hue-common
+  image: artnet-hue-entertainment:local
+  build:
+    context: .
+    target: runtime
+  init: true
+  network_mode: host
+  restart: unless-stopped
+  user: "${ARTNET_HUE_UID:-1000}:${ARTNET_HUE_GID:-1000}"
+  command: ["run", "--config", "/data/config.json"]
+
+services:
+  bridge-main:
+    <<: *artnet-hue-common
+    volumes:
+      - ./docker-data/main:/data
+
+  bridge-stage:
+    <<: *artnet-hue-common
+    volumes:
+      - ./docker-data/stage:/data
