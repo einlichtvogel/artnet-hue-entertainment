@@ -1,136 +1,173 @@
-import {v3} from 'node-hue-api';
-import {Api} from 'node-hue-api/dist/esm/api/Api';
- import {ChannelModeType} from './const';
-import {ColorUpdate, HueDtlsController} from './hue-dtls';
+import {EventEmitter} from 'node:events';
 import {ArtNetController} from 'artnet-protocol/dist';
 import {ArtDmx} from 'artnet-protocol/dist/protocol';
-import {DmxLight, LIGHT_MODES} from "./DmxLight";
+import {decodeColor, channelWidth} from './dmx';
+import {HueApiClient} from './hue-api';
+import {ColorUpdate, HueStreamController} from './hue-stream';
+import {ChannelMapping} from './types';
 
-export interface LightConfiguration {
-    dmxStart: number;
-    lightId: string;
-    channelMode: ChannelModeType;
-}
-
-export interface Configuration {
+export interface BridgeConfiguration {
     hueHost: string;
     hueUsername: string;
     hueClientKey: string;
-    entertainmentRoomId: number;
+    entertainmentConfigurationId: string;
     artNetBindIp: string;
     artNetUniverse: number;
-    lights: LightConfiguration[];
+    channels: ChannelMapping[];
 }
 
-export class ArtNetHueBridge {
+export interface HueAreaApi {
+    setEntertainmentState(id: string, action: 'start' | 'stop'): Promise<void>;
+}
 
-    private readonly configuration: Configuration;
+export interface HueStream {
+    connect(): Promise<void>;
+    sendUpdates(updates: readonly ColorUpdate[]): void;
+    close(): Promise<void>;
+    on(event: 'error', listener: (error: Error) => void): this;
+    on(event: 'close', listener: () => void): this;
+}
 
-    private hueApi: Api | null = null;
-    private lights: DmxLight[] | null = null;
-    private artNetController: ArtNetController | null = null;
-    private dtlsController: HueDtlsController | null = null;
+export interface ArtNetReceiver {
+    nameLong: string;
+    nameShort: string;
+    bind(host?: string): void;
+    close(): Promise<void>;
+    on(event: 'dmx', listener: (dmx: ArtDmx) => void): this;
+    off(event: 'dmx', listener: (dmx: ArtDmx) => void): this;
+}
 
-    constructor(configuration: Configuration) {
+export interface BridgeDependencies {
+    hueApi?: HueAreaApi;
+    stream?: HueStream;
+    artNet?: ArtNetReceiver;
+    now?: () => number;
+    logger?: Pick<Console, 'log' | 'warn' | 'error'>;
+}
+
+export class ArtNetHueBridge extends EventEmitter {
+    private readonly configuration: BridgeConfiguration;
+    private readonly hueApi: HueAreaApi;
+    private readonly stream: HueStream;
+    private readonly artNet: ArtNetReceiver;
+    private readonly now: () => number;
+    private readonly logger: Pick<Console, 'log' | 'warn' | 'error'>;
+    private areaStarted = false;
+    private artNetBound = false;
+    private closePromise: Promise<void> | null = null;
+    private lastShortFrameWarningAt = -Infinity;
+
+    constructor(configuration: BridgeConfiguration, dependencies: BridgeDependencies = {}) {
+        super();
         this.configuration = configuration;
+        this.hueApi = dependencies.hueApi
+            ?? new HueApiClient(configuration.hueHost, configuration.hueUsername);
+        this.stream = dependencies.stream
+            ?? new HueStreamController(
+                configuration.hueHost,
+                configuration.hueUsername,
+                configuration.hueClientKey,
+                configuration.entertainmentConfigurationId,
+            );
+        this.artNet = dependencies.artNet ?? new ArtNetController();
+        this.now = dependencies.now ?? Date.now;
+        this.logger = dependencies.logger ?? console;
+        this.onDmxData = this.onDmxData.bind(this);
     }
 
-    async start() {
-        this.hueApi = await v3.api.createLocal(this.configuration.hueHost)
-            .connect(this.configuration.hueUsername);
+    async start(): Promise<void> {
+        this.stream.on('error', error => this.handleStreamFailure(error));
+        this.stream.on('close', () => this.handleStreamFailure(new Error('Hue DTLS stream closed unexpectedly')));
+        try {
+            this.logger.log('Requesting Hue Entertainment v2 streaming mode...');
+            await this.hueApi.setEntertainmentState(this.configuration.entertainmentConfigurationId, 'start');
+            this.areaStarted = true;
 
-        const entertainment = await this.hueApi.groups.getEntertainment();
-        const rooms = entertainment.filter(ent => ent.id === this.configuration.entertainmentRoomId);
-        if (rooms.length !== 1) {
-            throw new Error(`Entertainment room with id ${this.configuration.entertainmentRoomId} was not found`);
+            this.logger.log('Performing Hue Entertainment DTLS handshake...');
+            await this.stream.connect();
+
+            this.artNet.nameLong = 'ArtNet Hue Entertainment';
+            this.artNet.nameShort = 'ArtNet Hue';
+            this.artNet.on('dmx', this.onDmxData);
+            this.artNet.bind(this.configuration.artNetBindIp);
+            this.artNetBound = true;
+
+            this.stream.sendUpdates(this.configuration.channels.map(mapping => ({
+                channelId: mapping.channelId,
+                color: [0, 0, 0],
+            })));
+            this.logger.log('Art-Net to Hue Entertainment v2 bridge is running.');
+        } catch (error) {
+            await this.close().catch(closeError => {
+                this.logger.error('Cleanup after startup failure also failed:', closeError);
+            });
+            throw error;
         }
+    }
 
-        const room = rooms[0];
-        let roomLightIds = room.lights;
-        const lightConfigById: { [lightId: string]: LightConfiguration } = {};
-        const lights: DmxLight[] = [];
-        this.configuration.lights.forEach(light => {
-            const idx = roomLightIds.indexOf(light.lightId);
-            if (idx !== -1) {
-                roomLightIds.splice(idx, 1);
+    close(): Promise<void> {
+        if (this.closePromise) {
+            return this.closePromise;
+        }
+        this.closePromise = this.closeResources();
+        return this.closePromise;
+    }
+
+    private async closeResources(): Promise<void> {
+        const errors: Error[] = [];
+        this.artNet.off('dmx', this.onDmxData);
+        await this.stream.close().catch(error => errors.push(asError(error)));
+        if (this.artNetBound) {
+            await this.artNet.close().catch(error => errors.push(asError(error)));
+            this.artNetBound = false;
+        }
+        if (this.areaStarted) {
+            await this.hueApi
+                .setEntertainmentState(this.configuration.entertainmentConfigurationId, 'stop')
+                .catch(error => errors.push(asError(error)));
+            this.areaStarted = false;
+        }
+        this.emit('closed');
+        if (errors.length > 0) {
+            throw new AggregateError(errors, 'One or more bridge resources could not be closed');
+        }
+    }
+
+    private onDmxData(dmx: ArtDmx): void {
+        if (dmx.universe !== this.configuration.artNetUniverse) {
+            return;
+        }
+        const requiredLength = Math.max(...this.configuration.channels.map(mapping => (
+            mapping.dmxStart - 1 + channelWidth(mapping.channelMode)
+        )));
+        if (dmx.data.length < requiredLength) {
+            if (this.now() - this.lastShortFrameWarningAt >= 5000) {
+                this.logger.warn(`Ignoring short ArtDMX frame: received ${dmx.data.length} channels, need ${requiredLength}`);
+                this.lastShortFrameWarningAt = this.now();
             }
-            lightConfigById[light.lightId] = light;
-
-            lights.push(new LIGHT_MODES[light.channelMode](light.dmxStart, parseInt(light.lightId, 10)));
-        });
-        if (roomLightIds.length !== 0) {
-            throw new Error(`Not all lights in the Entertainment room have been configured: ${roomLightIds}`);
+            return;
         }
-        // TODO: Detect (and warn) overlapping DMX channels
-
-        this.lights = lights;
-
-        this.dtlsController = new HueDtlsController(
-            this.configuration.hueHost,
-            this.configuration.hueUsername,
-            this.configuration.hueClientKey,
-        );
-        this.artNetController = new ArtNetController();
-        this.artNetController.nameLong = 'ArtNet Hue';
-        this.artNetController.nameShort = 'ArtNet Hue';
-        this.artNetController.bind(this.configuration.artNetBindIp);
-        this.artNetController.on('dmx', this.onDmxData.bind(this));
-
-        console.log('Requesting streaming mode...');
-        const streamingResponse = await this.hueApi.groups.enableStreaming(this.configuration.entertainmentRoomId);
-        console.log('Streaming enabled:', streamingResponse);
-
-        console.log('Sleeping for 1s to give the Hue bridge time to enable streaming mode');
-
-        // Short delay because it can take some time for the Hue bridge to start
-        // listening on the DTLS port.
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        console.log('Performing streaming mode handshake...');
-        await this.dtlsController.connect();
-        this.dtlsController.on('connected', this.onDtlsConnected.bind(this));
-
-        const shutdownHandler = () => {
-            process.off('SIGINT', shutdownHandler);
-            console.log('Received shutdown signal. Closing Hue connection...');
-            this.close().then(() => process.exit(0));
-        };
-        process.on('SIGINT', shutdownHandler);
-    }
-
-    public async close() {
-        await Promise.all([this.dtlsController!.close(), this.artNetController!.close()]);
-        if (this.hueApi) {
-            await this.hueApi.groups.disableStreaming(this.configuration.entertainmentRoomId);
-        }
-    }
-
-    private executeColorUpdate(dmx: ArtDmx) {
-        const colorUpdates: ColorUpdate[] = [];
-        this.lights!.forEach(light => {
-            const dmxData = dmx.data.slice(light.dmxStart - 1, (light.dmxStart - 1) + light.channelWidth);
-            const colors = light.getColorValue(dmxData);
-            // console.log(`Light ${light.lightId} set to ${colors}`);
-            colorUpdates.push({lightId: light.lightId, color: colors});
+        const updates = this.configuration.channels.map(mapping => {
+            const start = mapping.dmxStart - 1;
+            const width = channelWidth(mapping.channelMode);
+            return {
+                channelId: mapping.channelId,
+                color: decodeColor(mapping.channelMode, dmx.data.slice(start, start + width)),
+            };
         });
-
-        this.dtlsController?.sendUpdate(colorUpdates);
+        this.stream.sendUpdates(updates);
     }
 
-    private onDmxData(dmx: ArtDmx) {
-        if (dmx.universe == this.configuration.artNetUniverse) {
-            this.executeColorUpdate(dmx);
+    private handleStreamFailure(error: Error): void {
+        if (this.closePromise) {
+            return;
         }
+        this.close()
+            .catch(closeError => this.logger.error('Cleanup after Hue stream failure failed:', closeError))
+            .finally(() => this.emit('error', error));
     }
+}
 
-    private onDtlsConnected() {
-        console.log("Connected to Hue Entertainment API");
-
-        const colorUpdates: ColorUpdate[] = [];
-        this.lights!.forEach(light => {
-            colorUpdates.push({lightId: light.lightId, color: [0, 0, 0]});
-        });
-
-        this.dtlsController?.sendUpdate(colorUpdates);
-    }
+function asError(error: unknown): Error {
+    return error instanceof Error ? error : new Error(String(error));
 }

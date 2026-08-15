@@ -1,87 +1,160 @@
 # ArtNet Hue Entertainment
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.txt)
+ArtNet Hue Entertainment receives ArtDMX frames and streams their RGB values to a Philips Hue Entertainment area using the CLIP v2 and HueStream v2 APIs.
 
-__Note: This package is still work in progress!__
+It supports independently addressable standard color bulbs and the individual entertainment channels exposed by gradient products. Philips/Signify color-capable lights and a Hue Bridge with Entertainment support are required.
 
-In short: an ArtNet controller for the new Hue Entertainment API,
-giving near-realtime control of Hue lights.
+> **Photosensitivity warning:** Rapidly changing light can trigger seizures, migraines, or other adverse effects. The operator is responsible for safe programming and use.
 
-The well-known Philips/Signify Hue API only allows for about 10 updates per second.
-If you want to update multiple lights multiple times per second this approach will not scale.
-To make this practical, all color transitions will need to be done inside the Hue bulb.
-This complicates light programming, as Hue bulbs can not be used as any other RGB DMX light.
-As this is the only well-known Hue API, this is what most other Hue ArtNet bridges use.
+## Requirements
 
-Since the introduction of the Hue Sync Box, a new API is available allowing up to
-25 updates per second for up to 10 lights. This gives us almost real-time control over
-lights, even with perfect synchronization between the lights.
-This is called the Hue Entertainment API.
+- Node.js 22 or newer
+- A Hue Bridge and color-capable Hue lights
+- A Hue Entertainment area created in the Hue app
+- An Art-Net source such as QLC+
 
-To accomplish this, the Hue Bridge sends the entire update packet, which contains
-color information for all bulbs in the Entertainment group, to a 'Proxy' bulb.
-This is a bulb that is elected by the Hue bridge to be near all other bulbs in the
-Entertainment group. It will receive the full color update for all bulbs and it will
-broadcast the message so all bulbs receive it. Then every individual bulb will only
-take it's own color from the update message and apply it.
-This accomplishes near-perfect synchronization.
+In the Hue app, select the lamps for the Entertainment area and position them in the virtual room. Configuration normally uses the familiar numeric Hue light IDs; the software resolves the bridge's internal Entertainment channels automatically.
 
-Please note that only original Philips/Signify Hue color bulbs are supported.
-This means Ikea Tradfri bulbs can not be used, neither can Hue white bulbs.
-This is a limitation in the protocol and can not be worked around.
-
-If you need to support non-color or non-Hue bulbs as well, you should check out
-another project which talks to the normal Hue API, such as [Dmx-Hue](https://github.com/sinedied/dmx-hue).
-
-## Setting up
-
-## Building typescript
-
-Install typescript, build and install the project with:
+## Install and build
 
 ```bash
-npm i typescript --save-dev
-npx tsc
+npm install
+npm run build
 npm install .
 ```
 
+For development, run all compiler and automated checks with:
+
+```bash
+npm run check
+```
+
+## Initial setup
+
+1. Discover the bridge, or use its known address:
+
+   ```bash
+   artnet-hue-entertainment discover
+   ```
+
+2. Press the physical link button and pair:
+
+   ```bash
+   artnet-hue-entertainment pair --ip 192.168.1.10
+   ```
+
+3. List the Entertainment areas. If the existing area has legacy ID `/groups/200`, it is selected automatically; otherwise copy its UUID into `hue.entertainmentConfigurationId`.
+
+   ```bash
+   artnet-hue-entertainment list-areas
+   ```
+
+4. Optionally inspect the bridge-assigned channels, then generate consecutive lamp-ID DMX mappings:
+
+   ```bash
+   artnet-hue-entertainment list-channels
+   artnet-hue-entertainment auto-setup
+   ```
+
+5. Start streaming:
+
+   ```bash
+   artnet-hue-entertainment run
+   ```
+
+Use `--config <path>` with any command to select a file other than `./config.json`.
 
 ## Configuration
 
-To start using ArtNet-Hue-Entertainment, take the following steps:
-1. First, open the Philips Hue app on your phone
-   and setup a new Entertainment group.
-   This can be done by navigating to `Settings > Entertainment rooms`.
-2. If you don't have an entertainment group yet, create one by tapping
-   the blue plus button on the top right, give the entertainment room a name
-   and select some lights.
-   Placement of the bulbs is not important and will be ignored.
-3. Discover Hue bridges on your network by running `artnet-hue-entertainment discover`.
-   This will print a list of all Hue bridges and their IP address.
-4. Pair with a Hue bridge. To do so, first press the link button on the bridge.
-   Then run: `artnet-hue-entertainment pair --ip <ip address of bridge>`.
-5. Use `artnet-hue-entertertainment list-rooms` to find information of the Hue bulbs +
-   entertainment group. Configure them in TODO.
-6. Run using `artnet-hue-entertertainment run`
-7. This project really is still work in progress. More to come!
+`pair` and `auto-setup` create a configuration shaped like [config.example.json](config.example.json):
 
-## Channel modes
-DMX channel mode can be configured for every Hue light that is controlled.
-The following 3 modes are supported:
-1. `8bit` - 3 channels (R, G, B)
-2. `8bit-dimmable` - 4 channels (Dim, R, G, B). This is the recommended mode,
-   as Hue bulbs are controlled with 16 bit values. Color mixing is smooth even
-   on the lowest dimmer setting.
-3. `16bit` - 6 channels (R, R fine, G, G fine, B, B fine). As Hue bulbs are
-   controlled with 16 bit values this gives full raw control over the bulbs.
+```json
+{
+  "artnet": {
+    "host": "127.0.0.1",
+    "universe": 11
+  },
+  "hue": {
+    "host": "192.168.1.10",
+    "username": "application-key",
+    "clientKey": "dtls-client-key",
+    "entertainmentConfigurationId": "123e4567-e89b-42d3-a456-426614174000",
+    "lights": [
+      {
+        "lightId": "1",
+        "dmxStart": 1,
+        "channelMode": "8bit-dimmable"
+      }
+    ]
+  }
+}
+```
 
-## Protocol documentation
-* Hue Entertainment: https://developers.meethue.com/develop/hue-entertainment/philips-hue-entertainment-api/
-* ArtNet: https://artisticlicence.com/WebSiteMaster/User%20Guides/art-net.pdf
+- `artnet.host` is the local interface address on which UDP port 6454 is bound.
+- `artnet.universe` must match the incoming ArtDMX universe.
+- `entertainmentConfigurationId` is the v2 UUID shown by `list-areas`.
+- `lightId` is the familiar numeric Hue ID shown by `list-lights`, for example `1` for `/lights/1`.
+- `dmxStart` is one-based and must leave room for the selected mode within the 512-channel universe.
 
-## Disclaimer
-By using ArtNet-Hue-Entertainment you are in full control of the light that your bulbs output.
-Some light combinations and/or frequencies, etc. could cause epileptic seizures, migraines etc.
-to an end user, even if that person has no history of prior seizures or epilepsy etc.
-By taking full control over the lights you are responsible for preventing such adverse
-health effects. The maintainers of this repository are not responsible for any adverse health effects etc.
+The file contains credentials and is written with owner-only permissions. Do not commit or share it.
+
+### DMX channel modes
+
+- `8bit`: `R, G, B` (3 channels)
+- `8bit-dimmable`: `Dimmer, R, G, B` (4 channels, recommended)
+- `16bit`: `R, R fine, G, G fine, B, B fine` (6 channels)
+
+The included [`qlc+/Artnet-Hue-RGB.qxf`](qlc+/Artnet-Hue-RGB.qxf) defines all three modes for QLC+.
+
+### Entertainment channel mappings
+
+HueStream v2 communicates with area-local channel IDs internally. At startup, each configured `lightId` is resolved to the selected area's channel or channels. A normal bulb generally resolves to one channel; all segments of a gradient lamp receive the same configured DMX color.
+
+For advanced segment-level control, replace `lights` with explicit channel mappings:
+
+```json
+"channels": [
+  {
+    "channelId": 0,
+    "dmxStart": 1,
+    "channelMode": "8bit-dimmable"
+  }
+]
+```
+
+Use `list-channels` to discover those IDs. Explicit channels are also the fallback for a bridge or area that does not expose legacy light IDs. Do not configure `lights` and `channels` together. `auto-setup` always returns the configuration to lamp-ID mode and removes explicit channels.
+
+## Commands
+
+| Command | Purpose |
+| --- | --- |
+| `discover` | Query the official Hue discovery service for bridges. |
+| `pair --ip <address>` | Create an application key and DTLS client key after the link button is pressed. |
+| `list-areas` / `list-rooms` | List v2 Entertainment areas, UUIDs, and legacy IDs. |
+| `list-channels` | List the selected area's bridge-assigned stream channels. |
+| `list-lights` | List v2 light UUIDs and legacy light IDs. |
+| `ping-light --id <id-or-uuid>` | Flash one light; use `all` for all lights. |
+| `ping-lights` | Flash all lights in sequence. |
+| `rename-lights-after-id` | Rename Hue devices to `Light <legacy-id>`. |
+| `auto-setup` | Generate consecutive four-channel dimmable mappings using lamp IDs. |
+| `run` | Start the Art-Net receiver and Hue Entertainment stream. |
+
+## Troubleshooting
+
+- **No `/groups/200` area:** run `list-areas` and set `hue.entertainmentConfigurationId` to the required UUID.
+- **Light/channel mapping mismatch:** rerun `auto-setup` after editing the Entertainment area.
+- **Art-Net bind error:** set `artnet.host` to an address assigned to the local machine, or `0.0.0.0` to listen on all IPv4 interfaces.
+- **No DMX response:** verify the universe and ensure UDP port 6454 is reachable. Frames shorter than the highest configured DMX channel are ignored.
+- **DTLS failure:** ensure UDP port 2100 is reachable, no other application owns the Entertainment area, and the stored `clientKey` came from pairing with this bridge.
+- **Certificate mismatch:** verify that `hue.host` points to the paired Hue Bridge rather than a proxy or another device.
+
+See [docs/architecture.md](docs/architecture.md) for protocol and lifecycle details.
+
+## Protocol references
+
+- [Philips Hue developer program](https://developers.meethue.com/)
+- [Art-Net specification](https://artisticlicence.com/WebSiteMaster/User%20Guides/art-net.pdf)
+
+## License
+
+MIT — see [LICENSE.txt](LICENSE.txt).

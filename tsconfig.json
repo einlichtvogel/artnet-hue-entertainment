@@ -1,17 +1,18 @@
 {
-    "compilerOptions": {
-        "target": "es6",
-        "module": "commonjs",
-        "outDir": "./build/",
-        "strict": true,
-        "sourceMap": true,
-        "typeRoots": [
-            "node_modules/@types"
-        ],
-        "skipLibCheck": true
-    },
-    "exclude": [
-        "build/**",
-        "node_modules"
-    ]
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "rootDir": "src",
+    "outDir": "build",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUncheckedIndexedAccess": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "custom_ts_declarations/**/*.d.ts"],
+  "exclude": ["build", "node_modules"]
 }
