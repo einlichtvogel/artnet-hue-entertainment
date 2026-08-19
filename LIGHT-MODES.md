@@ -25,7 +25,7 @@ Use `hue.lights` for normal installations. `lightId` is the familiar numeric Hue
 
 A normal bulb resolves to one Hue Entertainment channel. For a gradient light, lamp-ID mode sends the same DMX color to all of its segments. Run `auto-setup` to generate consecutive lamp-ID mappings automatically. Add `--overwrite` when replacing existing `lights` or `channels` mappings.
 
-See [config.lights.example.json](config.lights.example.json) for a complete configuration.
+See [config.lights.example.json](docker/config.lights.example.json) for a complete configuration.
 
 ## Advanced channel-ID mapping
 
@@ -43,7 +43,7 @@ Use `hue.channels` only when individual gradient segments need separate colors o
 
 Run `list-channels` to find the area-local IDs. Explicit channel mode must cover the complete selected Entertainment area. Do not configure `lights` and `channels` together. Running `auto-setup` switches the configuration back to lamp-ID mode.
 
-See [config.channels.example.json](config.channels.example.json) for a complete configuration.
+See [config.channels.example.json](docker/config.channels.example.json) for a complete configuration.
 
 ## Supported DMX channel modes
 

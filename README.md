@@ -129,7 +129,7 @@ The file contains credentials and is written with owner-only permissions. Do not
 - `16bit`: `R, R fine, G, G fine, B, B fine` (6 channels)
 - `16bit-dimmable`: `Dimmer, Dimmer fine, R, R fine, G, G fine, B, B fine` (8 channels)
 
-See [docker/LIGHT-MODES.md](docker/LIGHT-MODES.md) for detailed channel tables, addressing examples, lamp-ID mappings, and advanced Hue channel mappings.
+See [docker/LIGHT-MODES.md](LIGHT-MODES.md) for detailed channel tables, addressing examples, lamp-ID mappings, and advanced Hue channel mappings.
 
 ### Entertainment channel mappings
 

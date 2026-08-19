@@ -40,7 +40,7 @@ When running auto-setup manually against a configuration that already contains `
 docker compose run --rm bridge auto-setup --overwrite --mode 16bit --config /data/config.json
 ```
 
-See [LIGHT-MODES.md](LIGHT-MODES.md) for all supported DMX layouts, channel widths, addressing examples, and the difference between lamp and channel mappings.
+See [LIGHT-MODES.md](../LIGHT-MODES.md) for all supported DMX layouts, channel widths, addressing examples, and the difference between lamp and channel mappings.
 
 ## Multiple instances
 
