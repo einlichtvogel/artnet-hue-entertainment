@@ -36,6 +36,13 @@ This checks that the image starts without starting the Art-Net/Hue stream:
 docker compose -f docker/local-test/compose.yaml run --rm bridge --help
 ```
 
+The container runs with `/data` as its working directory, so commands that
+override the service command still use the mounted `config.json` by default:
+
+```bash
+docker compose -f docker/local-test/compose.yaml run --rm bridge auto-setup --overwrite
+```
+
 ## Start the bridge
 
 ```bash
