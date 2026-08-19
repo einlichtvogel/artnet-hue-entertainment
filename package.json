@@ -1,10 +1,10 @@
 {
   "name": "artnet-hue-entertainment",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "description": "Near-realtime ArtNet control over Signify/Philips Hue lights using the new Hue Entertainment API",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jeffreykog/artnet-hue-entertainment.git"
+    "url": "https://github.com/einlichtvogel/artnet-hue-entertainment.git"
   },
   "scripts": {
     "prebuild": "node -e \"require('node:fs').rmSync('build', {recursive: true, force: true})\"",
@@ -19,9 +19,9 @@
     "url": "https://github.com/jeffreykog"
   },
   "license": "MIT",
-  "homepage": "https://github.com/jeffreykog/artnet-hue-entertainment",
+  "homepage": "https://github.com/einlichtvogel/artnet-hue-entertainment",
   "bugs": {
-    "url": "https://github.com/jeffreykog/artnet-hue-entertainment/issues"
+    "url": "https://github.com/einlichtvogel/artnet-hue-entertainment/issues"
   },
   "bin": {
     "artnet-hue-entertainment": "./build/cli.js"
