@@ -11,7 +11,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: einlichtvogel/artnet-hue-entertainment
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   test:
@@ -22,6 +22,11 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+
+      - name: Validate Docker Compose definitions
+        run: |
+          docker compose -f docker/compose.yaml config --quiet
+          docker compose -f docker/compose.local.yaml config --quiet
 
       - name: Set up Node.js
         uses: actions/setup-node@v6

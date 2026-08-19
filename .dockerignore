@@ -7,8 +7,6 @@
 node_modules
 build
 coverage
-docker-data
-docker/data
 config.json
 *.tgz
 npm-debug.log*

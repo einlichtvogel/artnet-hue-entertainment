@@ -5,13 +5,15 @@ services:
     image: artnet-hue-entertainment:local
     pull_policy: build
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile
       target: runtime
     init: true
     network_mode: host
-    restart: unless-stopped
+    restart: "no"
     user: "${ARTNET_HUE_UID:-1000}:${ARTNET_HUE_GID:-1000}"
+    working_dir: /data
+    entrypoint: ["node", "/app/build/cli.js"]
     volumes:
-      - ./docker/data/default:/data
-    command: ["run", "--config", "/data/config.json"]
+      - ./:/data
+    command: ["run"]

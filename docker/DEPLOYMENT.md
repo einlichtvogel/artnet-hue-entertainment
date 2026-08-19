@@ -1,95 +1,46 @@
 # Docker deployment
 
-The ready-to-use Compose files pull `ghcr.io/einlichtvogel/artnet-hue-entertainment:latest`. The image runs the compiled Node.js application as an unprivileged user and stores the writable configuration under `/data/config.json`. It exposes Art-Net UDP port 6454; Hue HTTPS and DTLS connections are outbound.
+The server definition pulls `ghcr.io/einlichtvogel/artnet-hue-entertainment:latest`; the local definition builds the runtime image from the repository root. Both run the compiled Node.js application as an unprivileged UID/GID and use host networking for Art-Net broadcasts and direct Hue LAN access.
 
-For a shorter setup guide and ready-to-copy configurations, see [README.md](README.md).
+## Relative configuration
 
-For a new installation, `./setup.sh` performs the pairing, area selection, DMX mode selection, correctly spaced lamp mapping, and service startup interactively. It refuses to replace an existing `data/default/config.json`.
+Compose resolves `./` relative to the Compose file, not the shell's current directory. Both definitions bind that directory to `/data`, make it the working directory, and invoke the CLI through its absolute image path. Consequently, the CLI's default `config.json` always resolves beside the Compose file, including when a service command is replaced by `run --rm`.
 
-Use `./setup.sh --overwrite [bridge-ip]` to replace an existing configuration deliberately. The script creates a uniquely named `config.json.backup.*` file and restores it automatically if the replacement setup fails. Auto-setup assigns DMX ranges from the lowest numeric Hue light ID to the highest.
-
-## Single instance
-
-Run the commands in this document from the `docker/` directory. Create a host directory that the container user can write. The default UID/GID is 1000; override it when the host account uses different IDs.
+The directory bind is intentional: Docker cannot reliably bind a host file that does not exist yet as a writable file. Binding the containing directory lets `pair` create `config.json` atomically. Set `ARTNET_HUE_UID` and `ARTNET_HUE_GID` to an identity that can write to the deployment directory.
 
 ```bash
-mkdir -p data/default
 export ARTNET_HUE_UID="$(id -u)"
 export ARTNET_HUE_GID="$(id -g)"
-docker compose pull
+docker compose -f docker/compose.yaml run --rm bridge pair --ip 192.168.1.10
 ```
 
-To reuse an existing configuration:
+The resulting file contains credentials, is written with owner-only permissions, and must not be committed or shared.
+
+## Independent server deployments
+
+For another server instance, copy the server Compose file into its own directory. Its relative mount gives the copy an independent adjacent `config.json`:
 
 ```bash
-cp ../config.json data/default/config.json
+mkdir -p deployments/stage
+cp docker/compose.yaml deployments/stage/compose.yaml
+docker compose -f deployments/stage/compose.yaml run --rm bridge pair --ip 192.168.1.10
+docker compose -f deployments/stage/compose.yaml up -d
 ```
 
-For a fresh configuration, pair and generate lamp-ID mappings from inside temporary containers:
-
-```bash
-docker compose run --rm bridge pair --ip 192.168.1.10 --config /data/config.json
-docker compose run --rm bridge list-areas --config /data/config.json
-docker compose run --rm bridge auto-setup --overwrite --config /data/config.json
-```
-
-Then start and inspect the service:
-
-```bash
-docker compose up -d
-docker compose logs -f bridge
-docker compose down
-```
-
-`docker compose run` uses the image entrypoint, so arguments begin with the CLI command rather than `node build/cli.js`.
-
-## Multiple instances
-
-Each instance needs its own writable configuration directory, credentials, Entertainment area, and DMX mapping. The example file defines `bridge-main` and `bridge-stage`:
-
-```bash
-mkdir -p data/main data/stage
-cp config.lights.example.json data/main/config.json
-cp config.lights.example.json data/stage/config.json
-docker compose -f compose.multiple.example.yaml up -d
-docker compose -f compose.multiple.example.yaml logs -f
-```
-
-Add more services by copying one service block and assigning a new `data/<name>` directory. Never mount the same configuration directory into two running instances.
-
-Only one application can own a Hue Entertainment area at a time. Multiple containers must therefore use different areas or bridges.
+Every running instance needs its own credentials, mappings, and Entertainment area. A Hue Entertainment area can be owned by only one active application.
 
 ## Network behavior
 
-The supplied Compose files use `network_mode: host`. This is the most reliable arrangement for Art-Net broadcasts and direct Hue LAN access on Linux. Set `artnet.host` to a real host-interface address or `0.0.0.0`.
+The supplied definitions use `network_mode: host`, the most reliable arrangement for Art-Net broadcasts on Linux. Set `artnet.host` to a host-interface address or `0.0.0.0`.
 
-Multiple host-network instances can share UDP 6454 because the Art-Net receiver enables address reuse. Broadcast Art-Net frames reach all instances, which independently filter their configured universe. For unicast Art-Net on one Docker host, delivery to multiple sockets is platform-dependent; use broadcast, separate host addresses, or deploy the instances on different hosts.
+Multiple host-network instances can share UDP 6454 because the receiver enables address reuse. Broadcast frames reach all instances, which filter their configured universe. Unicast delivery to multiple sockets is platform-dependent.
 
-Docker Desktop host networking must be enabled in Docker settings on supported macOS/Windows versions. If host networking is unavailable, remove `network_mode: host`, add `ports: ["6454:6454/udp"]`, and send unicast Art-Net to the Docker host. Only one such bridged instance can publish host port 6454 unless separate host addresses or nonstandard sender ports are used.
+Docker Desktop host networking must be enabled on supported macOS and Windows versions. If host networking is unavailable, replace it with `ports: ["6454:6454/udp"]` and send unicast Art-Net to the Docker host. Only one bridged instance can publish that port per host address.
 
-## Image commands
+Stop containers normally so the application can close DTLS and release the Hue Entertainment area after Docker sends `SIGTERM`.
 
-The `latest` image is built from the `main` branch for AMD64 and ARM64. Version tags such as `v1.2.3` additionally publish `1.2.3` and `1.2`. Every published image also gets an immutable `sha-<commit>` tag.
+## Image publishing
 
-To build and run the current checkout locally instead of pulling GHCR, use the development Compose file in the repository root:
+The workflow in `.github/workflows/container.yml` runs the Node.js checks, validates both Compose files, and builds the runtime image for AMD64 and ARM64. Pushes to `main`, version tags, and manual dispatches publish to GHCR; pull requests build without publishing.
 
-```bash
-cd ..
-docker compose -f compose.build.yaml up -d --build
-```
-
-The image can also be used without Compose:
-
-```bash
-docker build -f ../Dockerfile -t artnet-hue-entertainment:local ..
-docker run --rm --network host \
-  --user "$(id -u):$(id -g)" \
-  -v "$PWD/data/default:/data" \
-  artnet-hue-entertainment:local list-lights --config /data/config.json
-```
-
-Stop containers normally so the application can close DTLS and release the Hue Entertainment area. Docker sends `SIGTERM` directly to the Node.js entrypoint, and the bridge performs its normal transactional shutdown.
-
-## Publishing images
-
-The GitHub Actions workflow in `../.github/workflows/container.yml` uses the root `Dockerfile`, runs the automated checks, and builds the image on pull requests. Pushes to `main`, tags beginning with `v`, and manually dispatched runs publish to GitHub Container Registry. Publishing uses the repository's `GITHUB_TOKEN`; the repository must belong to `einlichtvogel` and GitHub Actions must have permission to create packages. No registry password is stored in the repository.
+The `latest` tag follows `main`. Version tags such as `v1.2.3` also publish `1.2.3` and `1.2`, and every published image receives an immutable `sha-<commit>` tag. Published images receive a GitHub artifact attestation tied to their registry digest.

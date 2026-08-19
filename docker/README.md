@@ -1,74 +1,77 @@
 # Docker quick start
 
-This folder contains only the files needed to deploy the published image: Compose definitions, example configurations, and runtime documentation. The default Compose setup runs `ghcr.io/einlichtvogel/artnet-hue-entertainment:latest` with host networking so it can receive Art-Net broadcasts and reach the Hue Bridge directly.
+This directory contains the two supported Compose definitions:
 
-## Start one instance
+- `compose.yaml` deploys `ghcr.io/einlichtvogel/artnet-hue-entertainment:latest` on a server.
+- `compose.local.yaml` builds and tests the source checked out in this repository.
 
-Run the interactive initial setup from the repository root:
+Both definitions mount their own directory as the container's working directory. They therefore read and write `config.json` beside the selected Compose file, even for temporary containers created with `docker compose run --rm`. The file is ignored by Git because it contains Hue credentials.
 
-```bash
-./docker/setup.sh
-```
-
-You can optionally provide the Hue Bridge address directly:
+Run the following commands from the repository root. On Linux, set the container identity to the current user so it can create and update the configuration:
 
 ```bash
-./docker/setup.sh 192.168.1.10
+export ARTNET_HUE_UID="$(id -u)"
+export ARTNET_HUE_GID="$(id -g)"
 ```
 
-The script checks Docker, creates `data/default/config.json`, pulls the current image, pairs with the bridge, shows the available Entertainment areas, sets the Art-Net universe, asks for the DMX mode, assigns consecutive addresses from the lowest light ID upward, and starts the service. It never overwrites an existing configuration unless `--overwrite` is provided.
+## Server deployment
 
-To replace an existing setup deliberately, use `--overwrite`. The previous configuration is backed up and restored automatically if the new setup fails:
+Pair with the Hue Bridge. This command creates `docker/config.json` with owner-only permissions when the file does not exist:
 
 ```bash
-./docker/setup.sh --overwrite 192.168.1.10
+docker compose -f docker/compose.yaml pull
+docker compose -f docker/compose.yaml run --rm bridge pair --ip 192.168.1.10
+docker compose -f docker/compose.yaml run --rm bridge list-areas
 ```
 
-For manual setup, enter this directory and copy the recommended example:
+If the required area is not the legacy `/groups/200` area, put the UUID shown by `list-areas` in `hue.entertainmentConfigurationId`. Also set `artnet.host` (normally `0.0.0.0`) and the required universe in `docker/config.json`.
+
+Generate consecutive DMX mappings and start the service:
 
 ```bash
-cd docker
-mkdir -p data/default
-cp config.lights.example.json data/default/config.json
+docker compose -f docker/compose.yaml run --rm bridge auto-setup --overwrite
+docker compose -f docker/compose.yaml up -d
+docker compose -f docker/compose.yaml logs -f bridge
 ```
 
-`auto-setup` creates the recommended lamp-ID mappings. Use `config.channels.example.json` only when you need advanced segment-level control with Hue Entertainment channel IDs.
+`auto-setup` reads the adjacent configuration automatically. A missing file is a valid starting point for `pair`, but `auto-setup` cannot succeed until pairing credentials have been saved.
 
-When running auto-setup manually against a configuration that already contains `lights` or `channels`, confirm replacement explicitly:
+To stop or update the service:
 
 ```bash
-docker compose run --rm bridge auto-setup --overwrite --mode 16bit --config /data/config.json
+docker compose -f docker/compose.yaml down
+docker compose -f docker/compose.yaml pull
+docker compose -f docker/compose.yaml up -d
 ```
 
-See [LIGHT-MODES.md](../LIGHT-MODES.md) for all supported DMX layouts, channel widths, addressing examples, and the difference between lamp and channel mappings.
+## Local testing
 
-## Multiple instances
-
-Give every instance its own directory and configuration:
+The local definition builds the runtime image from the current checkout and uses the same adjacent configuration:
 
 ```bash
-mkdir -p data/main data/stage
-cp config.lights.example.json data/main/config.json
-cp config.lights.example.json data/stage/config.json
-docker compose -f compose.multiple.example.yaml up -d
+docker compose -f docker/compose.local.yaml build
+docker compose -f docker/compose.local.yaml run --rm bridge --help
+docker compose -f docker/compose.local.yaml run --rm bridge auto-setup --overwrite
+docker compose -f docker/compose.local.yaml up -d
+docker compose -f docker/compose.local.yaml logs -f bridge
 ```
 
-Configure different Entertainment areas or bridges. A Hue Entertainment area can be controlled by only one active instance.
-
-## Update or build locally
+Stop the local container with:
 
 ```bash
-docker compose pull
-docker compose up -d
+docker compose -f docker/compose.local.yaml down
 ```
 
-Build files are kept in the repository root. To build and run the checked-out source instead of pulling GHCR:
+The local definition uses `pull_policy: build`, so commands use an image built from the checkout rather than pulling GHCR. Docker's build cache keeps unchanged rebuilds short.
+
+## Configuration examples
+
+For manual setup, copy one of the examples before editing it:
 
 ```bash
-cd ..
-docker compose -f compose.build.yaml up -d --build
+cp docker/config.lights.example.json docker/config.json
 ```
 
-For an isolated test using its own configuration, see [local-test/README.md](local-test/README.md).
+Use `config.lights.example.json` for normal lamp-ID mappings and `config.channels.example.json` only for advanced segment-level control. See [LIGHT-MODES.md](../LIGHT-MODES.md) for supported layouts and addressing rules.
 
-For networking details, image tags, and Docker Desktop notes, see [DEPLOYMENT.md](DEPLOYMENT.md).
+For network behavior, server copies, image tags, and publishing details, see [DEPLOYMENT.md](DEPLOYMENT.md).

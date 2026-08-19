@@ -31,27 +31,25 @@ npm run check
 
 ## Docker
 
-The repository includes a ready-to-use Compose definition that pulls the latest multi-platform image from GitHub Container Registry. On Linux, host networking provides reliable Art-Net broadcast reception and direct Hue LAN access.
+Two Compose files live in `docker/` and use the ignored `config.json` beside them:
 
-For a new installation, run the interactive setup from the repository root. It pulls the image, pairs the Hue Bridge, selects the Entertainment area, generates lamp-ID mappings, and starts the service:
+- `docker/compose.yaml` pulls the published multi-platform image from GitHub Container Registry for server deployment.
+- `docker/compose.local.yaml` builds and runs the checked-out source for local testing.
 
-```bash
-./docker/setup.sh
-```
-
-Pass the bridge address as an optional argument, for example `./docker/setup.sh 192.168.1.10`. The script asks for the bulb DMX mode and assigns consecutive channel addresses from the lowest light ID upward. It refuses to overwrite an existing configuration unless `--overwrite` is provided, and retains the previous file as a backup during replacement setup.
+For a fresh server configuration, run these commands from the repository root:
 
 ```bash
-cd docker
-mkdir -p data/default
-cp ../config.json data/default/config.json
 export ARTNET_HUE_UID="$(id -u)"
 export ARTNET_HUE_GID="$(id -g)"
-docker compose up -d
-docker compose logs -f bridge
+docker compose -f docker/compose.yaml run --rm bridge pair --ip 192.168.1.10
+docker compose -f docker/compose.yaml run --rm bridge list-areas
+docker compose -f docker/compose.yaml run --rm bridge auto-setup --overwrite
+docker compose -f docker/compose.yaml up -d
 ```
 
-Use [docker/compose.multiple.example.yaml](docker/compose.multiple.example.yaml) for multiple isolated deployments. Each instance gets its own configuration directory and must target a different Hue Entertainment area or bridge. The [Docker quick start](docker/README.md) includes ready-to-copy lamp and channel configuration examples, and [docker/local-test/README.md](docker/local-test/README.md) explains isolated local-image testing. [docker/DEPLOYMENT.md](docker/DEPLOYMENT.md) covers registry tags, local builds, UID/GID handling, and host-network limitations in detail.
+`pair` creates `docker/config.json` when it does not exist. Every Compose command reads that same relative file automatically, including commands executed with `run --rm`; no `--config` argument is needed. Before `auto-setup`, select a non-default Entertainment area in the configuration when required.
+
+See the [Docker quick start](docker/README.md) for complete setup and local testing commands. [Docker deployment details](docker/DEPLOYMENT.md) cover image tags, UID/GID handling, multiple deployment directories, and host-network limitations.
 
 ## Initial setup
 
@@ -129,7 +127,7 @@ The file contains credentials and is written with owner-only permissions. Do not
 - `16bit`: `R, R fine, G, G fine, B, B fine` (6 channels)
 - `16bit-dimmable`: `Dimmer, Dimmer fine, R, R fine, G, G fine, B, B fine` (8 channels)
 
-See [docker/LIGHT-MODES.md](LIGHT-MODES.md) for detailed channel tables, addressing examples, lamp-ID mappings, and advanced Hue channel mappings.
+See [LIGHT-MODES.md](LIGHT-MODES.md) for detailed channel tables, addressing examples, lamp-ID mappings, and advanced Hue channel mappings.
 
 ### Entertainment channel mappings
 
