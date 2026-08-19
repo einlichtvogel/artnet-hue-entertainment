@@ -9,5 +9,5 @@ services:
     restart: "no"
     user: "${ARTNET_HUE_UID:-1000}:${ARTNET_HUE_GID:-1000}"
     volumes:
-      - ../data/local-test:/data
-    command: ["run", "--config", "/data/config.json"]
+        - ../data/local-test/config.json:/app/config.json
+    command: ["run"]
